@@ -64,8 +64,7 @@ class Desk2HADisplaySpeaker(Desk2HAEntity, MediaPlayerEntity):
 
     _attr_device_class = MediaPlayerDeviceClass.SPEAKER
     _attr_supported_features = (
-        MediaPlayerEntityFeature.VOLUME_SET
-        | MediaPlayerEntityFeature.VOLUME_STEP
+        MediaPlayerEntityFeature.VOLUME_SET | MediaPlayerEntityFeature.VOLUME_STEP
     )
 
     def __init__(
