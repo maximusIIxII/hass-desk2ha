@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Desk2HA Agent",
+        "description": "Enter the hostname or IP address of the machine running the Desk2HA agent.",
+        "data": {
+          "agent_host": "Agent Host",
+          "agent_port": "Agent Port"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the Desk2HA agent.",
+      "unknown": "An unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This agent is already configured."
+    }
+  }
+}
