@@ -32,6 +32,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
+    # Register services (only once, on first entry)
+    if len(hass.data[DOMAIN]) == 1:
+        from .services import async_setup_services
+
+        await async_setup_services(hass)
+
     # Clean up orphaned entities from previous versions
     _cleanup_orphaned_entities(hass, entry)
 
@@ -45,6 +51,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok:
         coordinator: Desk2HACoordinator = hass.data[DOMAIN].pop(entry.entry_id)
         await coordinator.async_shutdown()
+
+        # Unregister services when last entry is removed
+        if not hass.data[DOMAIN]:
+            from .services import async_unload_services
+
+            await async_unload_services(hass)
+
     return unload_ok
 
 
