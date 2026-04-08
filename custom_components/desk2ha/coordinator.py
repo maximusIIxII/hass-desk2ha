@@ -7,7 +7,6 @@ from datetime import timedelta
 from typing import Any
 
 import aiohttp
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -47,9 +46,7 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _ensure_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
-            self._session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=10)
-            )
+            self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10))
         return self._session
 
     async def async_shutdown(self) -> None:
@@ -60,9 +57,7 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch /v1/info from agent."""
         session = await self._ensure_session()
         try:
-            async with session.get(
-                f"{self._url}/v1/info", headers=self.headers
-            ) as resp:
+            async with session.get(f"{self._url}/v1/info", headers=self.headers) as resp:
                 resp.raise_for_status()
                 self.agent_info = await resp.json()
                 return self.agent_info
@@ -98,9 +93,7 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Check for agent updates via GET /v1/update/check."""
         session = await self._ensure_session()
         try:
-            async with session.get(
-                f"{self._url}/v1/update/check", headers=self.headers
-            ) as resp:
+            async with session.get(f"{self._url}/v1/update/check", headers=self.headers) as resp:
                 resp.raise_for_status()
                 return await resp.json()
         except Exception as exc:
@@ -127,9 +120,7 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch /v1/metrics from agent."""
         session = await self._ensure_session()
         try:
-            async with session.get(
-                f"{self._url}/v1/metrics", headers=self.headers
-            ) as resp:
+            async with session.get(f"{self._url}/v1/metrics", headers=self.headers) as resp:
                 resp.raise_for_status()
                 return await resp.json()
         except aiohttp.ClientError as exc:

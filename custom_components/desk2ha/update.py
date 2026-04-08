@@ -39,10 +39,7 @@ class Desk2HAUpdateEntity(Desk2HAEntity, UpdateEntity):
     """Represents an agent update check."""
 
     _attr_device_class = UpdateDeviceClass.FIRMWARE
-    _attr_supported_features = (
-        UpdateEntityFeature.INSTALL
-        | UpdateEntityFeature.RELEASE_NOTES
-    )
+    _attr_supported_features = UpdateEntityFeature.INSTALL | UpdateEntityFeature.RELEASE_NOTES
 
     def __init__(self, coordinator: Desk2HACoordinator) -> None:
         super().__init__(coordinator, "agent_update", "Agent Update")
@@ -73,9 +70,7 @@ class Desk2HAUpdateEntity(Desk2HAEntity, UpdateEntity):
         except Exception:
             logger.debug("Update check failed", exc_info=True)
 
-    async def async_install(
-        self, version: str | None, backup: bool, **kwargs: Any
-    ) -> None:
+    async def async_install(self, version: str | None, backup: bool, **kwargs: Any) -> None:
         """Install an agent update."""
         await self.coordinator.async_install_update(version)
         # Re-check after install

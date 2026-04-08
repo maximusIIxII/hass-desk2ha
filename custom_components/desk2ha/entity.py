@@ -57,7 +57,7 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
         Handles multiple response shapes:
         - Top-level keys with value wrapper: ``{"cpu_package": {"value": 65}}``
         - Nested category dicts: ``{"system": {"cpu_usage_percent": {"value": 5}}}``
-        - Device arrays: ``{"displays": [{"id": "display.0", "brightness_percent": {"value": 61}}]}``
+        - Device arrays: ``{"displays": [{"id": "display.0", ...}]}``
         """
         # 1. Direct top-level key (e.g. "cpu_package")
         if key in data:
