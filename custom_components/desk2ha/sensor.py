@@ -178,6 +178,18 @@ KNOWN_SENSORS: dict[str, SensorDef] = {
     "power.design_voltage": SensorDef(
         "Design Voltage", SensorDeviceClass.VOLTAGE, "V", "measurement", "mdi:flash"
     ),
+    # Network
+    "network.wifi_signal_percent": SensorDef(
+        "WiFi Signal", unit="%", state_class="measurement", icon="mdi:wifi"
+    ),
+    "network.wifi_rssi_dbm": SensorDef(
+        "WiFi RSSI",
+        SensorDeviceClass.SIGNAL_STRENGTH,
+        "dBm",
+        "measurement",
+        "mdi:wifi",
+    ),
+    "network.wifi_ssid": SensorDef("WiFi SSID", icon="mdi:wifi"),
     # Agent
     "agent.version": SensorDef("Agent Version", icon="mdi:information", diagnostic=True),
     "agent.uptime": SensorDef(
