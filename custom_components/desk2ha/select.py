@@ -104,7 +104,47 @@ async def async_setup_entry(
                 )
             )
 
+    # Thermal profile (top-level metric, not per-display)
+    data = coordinator.data or {}
+    flat_thermals = data.get("thermals", {})
+    # thermal_profile can be in thermals or top-level
+    tp_val = flat_thermals.get("thermal_profile") or _find_flat(data, "thermal_profile")
+    if tp_val is not None:
+        entities.append(
+            Desk2HASelect(
+                coordinator=coordinator,
+                metric_key="thermal_profile",
+                name="Thermal Profile",
+                command="agent.set_thermal_profile",
+                target="",
+                param_key="profile",
+                options=[
+                    "balanced",
+                    "cool_bottom",
+                    "quiet",
+                    "performance",
+                    "ultra_performance",
+                    "intelligent_cooling",
+                    "extreme_performance",
+                    "battery_saving",
+                ],
+                icon="mdi:thermostat",
+            )
+        )
+
     async_add_entities(entities)
+
+
+def _find_flat(data: dict[str, Any], key: str) -> Any:
+    """Find a metric in flat or nested response."""
+    if key in data:
+        val = data[key]
+        return val.get("value") if isinstance(val, dict) and "value" in val else val
+    for section in data.values():
+        if isinstance(section, dict) and key in section:
+            val = section[key]
+            return val.get("value") if isinstance(val, dict) and "value" in val else val
+    return None
 
 
 class Desk2HASelect(Desk2HAEntity, SelectEntity):
