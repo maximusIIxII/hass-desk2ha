@@ -179,10 +179,45 @@ KNOWN_SENSORS: dict[str, SensorDef] = {
         "Design Voltage", SensorDeviceClass.VOLTAGE, "V", "measurement", "mdi:flash"
     ),
     # Agent
-    "agent.version": SensorDef("Agent Version", icon="mdi:information"),
+    "agent.version": SensorDef("Agent Version", icon="mdi:information", diagnostic=True),
     "agent.uptime": SensorDef(
         "Agent Uptime", SensorDeviceClass.DURATION, "s", "measurement", "mdi:clock-outline"
     ),
+}
+
+# Suffix-based enrichment for auto-discovered peripheral/device metrics.
+# Applied when the full key is not in KNOWN_SENSORS but the suffix matches.
+_SUFFIX_ENRICHMENT: dict[str, dict[str, Any]] = {
+    "battery_level": {
+        "device_class": SensorDeviceClass.BATTERY,
+        "unit": "%",
+        "state_class": "measurement",
+        "icon": "mdi:battery",
+    },
+    "firmware": {"icon": "mdi:chip", "diagnostic": True},
+    "model": {"icon": "mdi:information", "diagnostic": True},
+    "manufacturer": {"icon": "mdi:domain", "diagnostic": True},
+    "charging": {"icon": "mdi:battery-charging"},
+    "sidetone": {"icon": "mdi:headphones", "unit": "level"},
+    "chatmix": {"icon": "mdi:headphones", "unit": "level"},
+    "led": {"icon": "mdi:led-on"},
+    "volume_percent": {"icon": "mdi:volume-high", "unit": "%", "state_class": "measurement"},
+    "muted": {"icon": "mdi:volume-off"},
+    # Webcam
+    "brightness": {"icon": "mdi:brightness-6", "state_class": "measurement"},
+    "contrast": {"icon": "mdi:contrast-box", "state_class": "measurement"},
+    "saturation": {"icon": "mdi:palette", "state_class": "measurement"},
+    "sharpness": {"icon": "mdi:blur", "state_class": "measurement"},
+    "exposure": {"icon": "mdi:camera-iris", "state_class": "measurement"},
+    "zoom": {"icon": "mdi:magnify-plus", "state_class": "measurement"},
+    "white_balance": {
+        "icon": "mdi:white-balance-sunny",
+        "unit": "K",
+        "state_class": "measurement",
+    },
+    "autofocus": {"icon": "mdi:camera-enhance"},
+    "auto_wb": {"icon": "mdi:white-balance-auto"},
+    "resolution": {"icon": "mdi:monitor", "diagnostic": True},
 }
 
 # Metric keys to skip as sensors (handled by other platforms)
@@ -287,12 +322,18 @@ async def async_setup_entry(
                 )
             )
         else:
-            # Auto-discover: create entity with generated name
+            # Auto-discover with suffix enrichment
+            enrich = _SUFFIX_ENRICHMENT.get(key_suffix, {})
             entities.append(
                 Desk2HASensor(
                     coordinator=coordinator,
                     metric_key=metric_key,
                     name=_make_name(metric_key),
+                    device_class=enrich.get("device_class"),
+                    unit=enrich.get("unit"),
+                    state_class=enrich.get("state_class"),
+                    icon=enrich.get("icon"),
+                    diagnostic=enrich.get("diagnostic", False),
                 )
             )
 
