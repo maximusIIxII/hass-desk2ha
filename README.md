@@ -73,6 +73,16 @@ In the integration options you can configure:
 | **Logo not visible** | Custom component logos require HA 2026.3+ with `brand/` directory. Older HA versions won't show the icon. | HA limitation |
 | **MQTT entities duplicate HTTP entities** | If both HTTP polling and MQTT are active, the same metrics appear twice. Use one transport or the other, not both. | Planned fix |
 
+## Upcoming Features
+
+- **Product images**: Device-specific icons and silhouettes per vendor/model
+- **Bluetooth peripherals**: Detect devices connected via Dell Universal Receiver / Logitech Bolt
+- **Remote agent installation**: Install and configure the agent from the HA UI via SSH/WinRM
+- **Custom Lovelace card**: Dedicated dashboard card showing the full desk overview
+- **More vendor plugins**: Corsair iCUE, SteelSeries Sonar, Razer Synapse
+- **Webcam controls**: Brightness, contrast, white balance, FOV via UVC
+- **Fleet management**: Monitor multiple desks from a single HA instance
+
 ## License
 
 Apache-2.0
