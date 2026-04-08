@@ -15,8 +15,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import Desk2HACoordinator
-from .entity import Desk2HAEntity
-from .helpers import extract_displays
+from .entity import Desk2HASubDeviceEntity
+from .helpers import display_metadata, extract_displays
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,23 +81,22 @@ async def async_setup_entry(
     for i, display in enumerate(displays):
         target = display.get("id", f"display.{i}")
         idx = target.split(".")[-1] if "." in target else str(i)
+        meta = display_metadata(display, idx, coordinator.device_key)
 
         for defn in DISPLAY_SELECT_DEFS:
             if defn.suffix not in display:
                 continue
-            name = defn.name_template.format(idx=idx)
-            if len(displays) == 1:
-                name = name.replace(f" {idx} ", " ")
             entities.append(
                 Desk2HASelect(
                     coordinator=coordinator,
                     metric_key=f"{target}.{defn.suffix}",
-                    name=name,
+                    name=defn.name_template.format(idx=idx).replace(f"Display {idx} ", ""),
                     command=defn.command,
                     target=target,
                     param_key=defn.param_key,
                     options=defn.options,
                     icon=defn.icon,
+                    **meta,
                 )
             )
 
@@ -144,7 +143,7 @@ def _find_flat(data: dict[str, Any], key: str) -> Any:
     return None
 
 
-class Desk2HASelect(Desk2HAEntity, SelectEntity):
+class Desk2HASelect(Desk2HASubDeviceEntity, SelectEntity):
     """A Desk2HA select entity."""
 
     def __init__(
@@ -157,8 +156,9 @@ class Desk2HASelect(Desk2HAEntity, SelectEntity):
         param_key: str,
         options: list[str],
         icon: str | None = None,
+        **sub_kwargs: Any,
     ) -> None:
-        super().__init__(coordinator, metric_key, name)
+        super().__init__(coordinator, metric_key, name, **sub_kwargs)
         self._command = command
         self._target = target
         self._param_key = param_key
