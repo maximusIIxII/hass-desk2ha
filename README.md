@@ -18,12 +18,17 @@ Brings your entire desk — PC, monitors, peripherals — into Home Assistant. W
 
 ## What you get
 
-- **50+ sensors**: CPU, RAM, disk, battery, GPU, thermals, fan speeds, network, OS info
+- **80+ sensors**: CPU, RAM, disk, battery, GPU, thermals, fan speeds, network, OS info
 - **Display controls**: Brightness, contrast, volume, input source, KVM switch, PBP mode
-- **Peripheral batteries**: HID, BLE, headsets (via HeadsetControl)
-- **Power monitoring**: USB PD charger status, AC adapter wattage
+- **Webcam controls**: Brightness, contrast, saturation, white balance, focus, zoom via UVC
+- **Logitech Litra**: Power, brightness, color temperature as HA light entity
+- **Peripheral detection**: USB devices, wireless receivers (Dell, Logitech, Jabra, Corsair, SteelSeries, Razer)
+- **Power monitoring**: USB PD charger status, AC adapter wattage, Dell DCM thermals
+- **Sub-devices**: Each display, peripheral, and receiver appears as its own HA device
 - **Agent updates**: See available updates + install from HA
 - **Auto-discovery**: Zeroconf finds agents on your network
+- **Remote install**: Deploy the agent on remote machines via SSH or WinRM
+- **Fleet management**: Monitor multiple desks with fleet_status, refresh, restart services
 - **Dynamic entities**: Only creates entities for metrics your agent actually reports
 
 ## Installation
@@ -44,24 +49,40 @@ Copy `custom_components/desk2ha/` to your HA `custom_components/` directory and 
 
 The [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) must be running on the target machine.
 
+**Option 1: Manual**
 1. Install the agent: `pip install desk2ha-agent`
 2. Start it with a config file (see agent README)
 3. In HA, add the Desk2HA integration:
    - **URL**: `http://<agent-ip>:9693`
    - **Token**: The auth token from your agent config
 
-Or let Zeroconf auto-discover the agent on your network.
+**Option 2: Auto-discovery**
+The agent advertises via Zeroconf. HA will discover it automatically.
+
+**Option 3: Remote install**
+In the integration setup, choose "Install agent on remote machine" and provide SSH (Linux/macOS) or WinRM (Windows) credentials. The integration installs the agent, generates a config, and starts it automatically.
 
 ## Entity Platforms
 
 | Platform | Examples |
 |----------|---------|
-| **Sensor** | CPU Usage, RAM, Battery Level, GPU Model, Fan Speed, Display Model |
+| **Sensor** | CPU Usage, RAM, Battery Level, GPU Model, Fan Speed, Display Model, WiFi RSSI |
 | **Binary Sensor** | On AC Power |
 | **Number** | Display Brightness, Contrast, Volume (per display) |
-| **Select** | Display Input Source, Power State, KVM Switch, PBP Mode |
-| **Button** | Refresh Data, Restart Agent |
+| **Select** | Display Input Source, Power State, KVM Switch, PBP Mode, Thermal Profile |
+| **Switch** | Auto Brightness, Auto Color Temperature |
+| **Light** | Display Brightness (dimmable), Logitech Litra (brightness + color temp) |
+| **Media Player** | Display Speaker Volume |
+| **Button** | Refresh Data, Restart Agent, Lock Screen, Sleep, Shutdown |
 | **Update** | Agent version check + install |
+
+## Services
+
+| Service | Description |
+|---------|-------------|
+| `desk2ha.fleet_status` | Get status of all configured desks (online/offline, versions, collectors) |
+| `desk2ha.refresh` | Force-refresh metrics from one or all desks |
+| `desk2ha.restart_agent` | Send restart command to a specific agent |
 
 ## Options
 
@@ -78,20 +99,14 @@ In the integration options you can configure:
 
 | Issue | Workaround | Status |
 |-------|------------|--------|
-| **Duplicate sub-devices after upgrade** | Upgrading from pre-sub-device versions leaves orphaned entities. Fix: delete the integration in HA and re-add it. | Known |
 | **Display entities show "not available"** | Display controls require the agent to run interactively (not as service) for DDC/CI access. | By design |
-| **Logo not visible** | Custom component logos require HA 2026.3+ with `brand/` directory. Older HA versions won't show the icon. | HA limitation |
 | **MQTT entities duplicate HTTP entities** | If both HTTP polling and MQTT are active, the same metrics appear twice. Use one transport or the other, not both. | Planned fix |
 
 ## Upcoming Features
 
-- **Product images**: Device-specific icons and silhouettes per vendor/model
-- **Bluetooth peripherals**: Detect devices connected via Dell Universal Receiver / Logitech Bolt
-- **Remote agent installation**: Install and configure the agent from the HA UI via SSH/WinRM
 - **Custom Lovelace card**: Dedicated dashboard card showing the full desk overview
-- **More vendor plugins**: Corsair iCUE, SteelSeries Sonar, Razer Synapse
-- **Webcam controls**: Brightness, contrast, white balance, FOV via UVC
-- **Fleet management**: Monitor multiple desks from a single HA instance
+- **Product images Tier 3**: Fetch real product photos from vendor websites
+- **Vendor battery levels**: Corsair, SteelSeries, Razer battery via HID
 
 ## License
 
