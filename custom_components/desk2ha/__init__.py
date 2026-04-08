@@ -124,27 +124,31 @@ def _cleanup_orphaned_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
                 _remove_device(device)
                 continue
 
-    # 3. Deduplicate: same model shown as two devices (old vs new schema)
-    #    Keep the device with more entities, remove the other
+    # 3. Deduplicate: same device shown twice (old vs new schema)
+    #    Match by name (what HA displays), keep the one with more entities
     remaining = [d for d in devices if d.id not in removed_ids]
-    seen_models: dict[str, Any] = {}
+    seen_names: dict[str, Any] = {}
     for device in remaining:
-        # Use model as dedup key (more stable than name)
-        model = (device.model or device.name or "").lower().strip()
-        if not model:
+        # Normalize: strip manufacturer prefix from name for matching
+        name = (device.name or "").lower().strip()
+        if device.manufacturer:
+            mfg = device.manufacturer.lower()
+            if name.startswith(mfg + " "):
+                name = name[len(mfg) :].strip()
+        if not name:
             continue
         entity_count = len(er.async_entries_for_device(ent_registry, device.id))
 
-        if model in seen_models:
-            prev_device, prev_count = seen_models[model]
+        if name in seen_names:
+            prev_device, prev_count = seen_names[name]
             # Keep the one with more entities
             if entity_count > prev_count:
                 _remove_device(prev_device)
-                seen_models[model] = (device, entity_count)
+                seen_names[name] = (device, entity_count)
             else:
                 _remove_device(device)
         else:
-            seen_models[model] = (device, entity_count)
+            seen_names[name] = (device, entity_count)
 
     if removed_ids:
         logger.info("Removed %d orphaned/duplicate devices", len(removed_ids))
