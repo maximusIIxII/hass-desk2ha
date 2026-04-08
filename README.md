@@ -1,6 +1,9 @@
 # Desk2HA — Home Assistant Integration
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![GitHub Release](https://img.shields.io/github/v/release/maximusIIxII/hass-desk2ha)](https://github.com/maximusIIxII/hass-desk2ha/releases)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
+[![CI](https://github.com/maximusIIxII/hass-desk2ha/actions/workflows/ci.yml/badge.svg)](https://github.com/maximusIIxII/hass-desk2ha/actions/workflows/ci.yml)
 
 Multi-vendor desktop monitoring integration for [Home Assistant](https://www.home-assistant.io/).
 

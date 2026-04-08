@@ -3,12 +3,28 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "custom_components/desk2ha/**"
+      - "tests/**"
+      - ".github/workflows/ci.yml"
+      - ".pre-commit-config.yaml"
   push:
     branches: [main]
+    paths:
+      - "custom_components/desk2ha/**"
+      - "tests/**"
+      - ".github/workflows/ci.yml"
+      - ".pre-commit-config.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,6 +36,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,6 +48,8 @@ jobs:
 
   hassfest:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: home-assistant/actions/hassfest@master
