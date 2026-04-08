@@ -26,13 +26,19 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialize the config flow."""
+        self._discovered_url: str = ""
+        self._install_result: Any = None
+
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle setup method selection."""
         if user_input is not None:
             method = user_input["method"]
             if method == "manual_url":
                 return await self.async_step_manual()
-            # auto_discover and install_agent are future features
+            if method == "install_agent":
+                return await self.async_step_install_choose_os()
             return await self.async_step_manual()
 
         return self.async_show_form(
@@ -42,12 +48,139 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required("method", default="manual_url"): vol.In(
                         {
                             "manual_url": "Enter agent URL manually",
-                            "auto_discover": "Auto-discover agents (coming soon)",
+                            "install_agent": "Install agent on remote machine",
                         }
                     ),
                 }
             ),
         )
+
+    async def async_step_install_choose_os(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose target OS for remote installation."""
+        if user_input is not None:
+            os_type = user_input["os_type"]
+            if os_type == "windows":
+                return await self.async_step_install_winrm()
+            return await self.async_step_install_ssh()
+
+        return self.async_show_form(
+            step_id="install_choose_os",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("os_type", default="linux"): vol.In(
+                        {
+                            "linux": "Linux",
+                            "macos": "macOS",
+                            "windows": "Windows",
+                        }
+                    ),
+                }
+            ),
+        )
+
+    async def async_step_install_ssh(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Install agent via SSH on Linux/macOS."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            from .lifecycle.remote_install import install_via_ssh
+
+            result = await install_via_ssh(
+                host=user_input["host"],
+                port=user_input.get("ssh_port", 22),
+                username=user_input["username"],
+                password=user_input.get("password"),
+                agent_port=user_input.get("agent_port", DEFAULT_PORT),
+            )
+
+            if result.success:
+                self._install_result = result
+                return await self.async_step_install_complete()
+            errors["base"] = "install_failed"
+
+        return self.async_show_form(
+            step_id="install_ssh",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("host"): str,
+                    vol.Optional("ssh_port", default=22): int,
+                    vol.Required("username"): str,
+                    vol.Required("password"): str,
+                    vol.Optional("agent_port", default=DEFAULT_PORT): int,
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_install_winrm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Install agent via WinRM on Windows."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            from .lifecycle.remote_install import install_via_winrm
+
+            result = await install_via_winrm(
+                host=user_input["host"],
+                username=user_input["username"],
+                password=user_input["password"],
+                agent_port=user_input.get("agent_port", DEFAULT_PORT),
+            )
+
+            if result.success:
+                self._install_result = result
+                return await self.async_step_install_complete()
+            errors["base"] = "install_failed"
+
+        return self.async_show_form(
+            step_id="install_winrm",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("host"): str,
+                    vol.Required("username"): str,
+                    vol.Required("password"): str,
+                    vol.Optional("agent_port", default=DEFAULT_PORT): int,
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_install_complete(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Complete installation — verify and create entry."""
+        result = self._install_result
+        if result is None:
+            return self.async_abort(reason="install_failed")
+
+        url = result.agent_url
+        token = result.token
+
+        try:
+            info = await self._fetch_agent_info(url, token)
+            device_key = info.get("device_key", "unknown")
+            await self.async_set_unique_id(device_key)
+            self._abort_if_unique_id_configured()
+
+            hw = info.get("hardware", {})
+            title = f"{hw.get('manufacturer', 'Desk2HA')} {hw.get('model', device_key)}"
+
+            return self.async_create_entry(
+                title=title,
+                data={
+                    CONF_AGENT_URL: url,
+                    CONF_AGENT_TOKEN: token,
+                    CONF_DEVICE_KEY: device_key,
+                    CONF_TRANSPORT: "http",
+                },
+            )
+        except Exception:
+            return self.async_abort(reason="cannot_connect")
 
     async def async_step_manual(
         self, user_input: dict[str, Any] | None = None
