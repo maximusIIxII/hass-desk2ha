@@ -6,6 +6,16 @@ Multi-vendor desktop monitoring integration for [Home Assistant](https://www.hom
 
 Brings your entire desk — PC, monitors, peripherals — into Home Assistant. Works with the [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) running on Windows, Linux, or macOS.
 
+## Screenshots
+
+| Sensors | Controls | Diagnostics | Config |
+|---------|----------|-------------|--------|
+| ![Sensors](docs/screenshots/sensors.png) | ![Controls](docs/screenshots/controls.png) | ![Diagnostics](docs/screenshots/diagnostics.png) | ![Config](docs/screenshots/config.png) |
+
+| Connected Devices |
+|-------------------|
+| ![Devices](docs/screenshots/devices.png) |
+
 ## What you get
 
 - **50+ sensors**: CPU, RAM, disk, battery, GPU, thermals, fan speeds, network, OS info
