@@ -94,6 +94,35 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except Exception as exc:
             raise UpdateFailed(f"Command failed: {exc}") from exc
 
+    async def async_check_update(self) -> dict[str, Any]:
+        """Check for agent updates via GET /v1/update/check."""
+        session = await self._ensure_session()
+        try:
+            async with session.get(
+                f"{self._url}/v1/update/check", headers=self.headers
+            ) as resp:
+                resp.raise_for_status()
+                return await resp.json()
+        except Exception as exc:
+            raise UpdateFailed(f"Update check failed: {exc}") from exc
+
+    async def async_install_update(self, version: str | None = None) -> dict[str, Any]:
+        """Install agent update via POST /v1/update/install."""
+        session = await self._ensure_session()
+        payload: dict[str, Any] = {}
+        if version:
+            payload["version"] = version
+        try:
+            async with session.post(
+                f"{self._url}/v1/update/install",
+                headers=self.headers,
+                json=payload,
+            ) as resp:
+                resp.raise_for_status()
+                return await resp.json()
+        except Exception as exc:
+            raise UpdateFailed(f"Update install failed: {exc}") from exc
+
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch /v1/metrics from agent."""
         session = await self._ensure_session()
