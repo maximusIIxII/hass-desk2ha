@@ -98,8 +98,8 @@ async def async_setup_entry(
         model_name = model_raw.get("value", "") if isinstance(model_raw, dict) else str(model_raw)
         mfg_raw = display.get("manufacturer", {})
         mfg_name = mfg_raw.get("value", "") if isinstance(mfg_raw, dict) else str(mfg_raw)
-        sub_id = f"{coordinator.device_key}_{target}"
-        sub_name = f"{mfg_name} {model_name}".strip() or f"Display {idx}"
+        sub_id = f"{coordinator.device_key}_display_{idx}"
+        sub_name = model_name or f"Display {idx}"
 
         for defn in DISPLAY_NUMBER_DEFS:
             if defn.suffix not in display:
