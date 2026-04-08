@@ -214,6 +214,10 @@ _SUFFIX_ENRICHMENT: dict[str, dict[str, Any]] = {
     "sidetone": {"icon": "mdi:headphones", "unit": "level"},
     "chatmix": {"icon": "mdi:headphones", "unit": "level"},
     "led": {"icon": "mdi:led-on"},
+    "power": {"icon": "mdi:power"},
+    "brightness_lumen": {"icon": "mdi:brightness-6", "unit": "lm", "state_class": "measurement"},
+    "brightness_percent": {"icon": "mdi:brightness-6", "unit": "%", "state_class": "measurement"},
+    "color_temp": {"icon": "mdi:palette", "unit": "K", "state_class": "measurement"},
     "volume_percent": {"icon": "mdi:volume-high", "unit": "%", "state_class": "measurement"},
     "muted": {"icon": "mdi:volume-off"},
     # Webcam
