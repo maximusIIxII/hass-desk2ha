@@ -12,7 +12,7 @@ from .coordinator import Desk2HACoordinator
 
 
 class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
-    """Base class for Desk2HA entities."""
+    """Base class for Desk2HA entities (host device)."""
 
     _attr_has_entity_name = True
 
@@ -31,13 +31,13 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
 
     @property
     def device_info(self) -> DeviceInfo:
+        """Return host device info (main PC)."""
         info = self.coordinator.agent_info
         hw = info.get("hardware", {})
         identity = info.get("identity", {})
         config = info.get("config", {})
         http_config = config.get("http", {})
 
-        # Build configuration URL from agent info
         config_url = None
         if http_config.get("enabled"):
             port = http_config.get("port", 9693)
@@ -47,7 +47,7 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
 
         return DeviceInfo(
             identifiers={(DOMAIN, self._device_key)},
-            name=f"{hw.get('manufacturer', 'Unknown')} {hw.get('model', self._device_key)}",
+            name=(f"{hw.get('manufacturer', 'Unknown')} {hw.get('model', self._device_key)}"),
             manufacturer=hw.get("manufacturer"),
             model=hw.get("model"),
             serial_number=identity.get("serial_number"),
@@ -64,14 +64,8 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
 
     @staticmethod
     def _find_metric(data: dict[str, Any], key: str) -> Any:
-        """Find a metric value in the nested response data.
-
-        Handles multiple response shapes:
-        - Top-level keys with value wrapper: ``{"cpu_package": {"value": 65}}``
-        - Nested category dicts: ``{"system": {"cpu_usage_percent": {"value": 5}}}``
-        - Device arrays: ``{"displays": [{"id": "display.0", ...}]}``
-        """
-        # 1. Direct top-level key (e.g. "cpu_package")
+        """Find a metric value in the nested response data."""
+        # 1. Direct top-level key
         if key in data:
             val = data[key]
             if isinstance(val, dict) and "value" in val:
@@ -80,7 +74,7 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
 
         parts = key.split(".")
 
-        # 2. category.metric (e.g. "system.cpu_usage_percent", "battery.state")
+        # 2. category.metric
         if len(parts) == 2:
             category = data.get(parts[0])
             if isinstance(category, dict):
@@ -89,9 +83,8 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
                     return sub["value"]
                 return sub
 
-        # 3. Device array: "display.0.brightness_percent" -> displays[0].brightness_percent
+        # 3. Device array
         if len(parts) >= 3:
-            # Map singular key prefix to plural array key
             array_key_map = {
                 "display": "displays",
                 "peripheral": "peripherals",
@@ -112,3 +105,34 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
                         return val
 
         return None
+
+
+class Desk2HASubDeviceEntity(Desk2HAEntity):
+    """Entity belonging to a sub-device (display, peripheral, etc.)."""
+
+    def __init__(
+        self,
+        coordinator: Desk2HACoordinator,
+        metric_key: str,
+        name: str,
+        sub_device_id: str,
+        sub_device_name: str,
+        sub_manufacturer: str | None = None,
+        sub_model: str | None = None,
+    ) -> None:
+        super().__init__(coordinator, metric_key, name)
+        self._sub_device_id = sub_device_id
+        self._sub_device_name = sub_device_name
+        self._sub_manufacturer = sub_manufacturer
+        self._sub_model = sub_model
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return sub-device info (linked via main device)."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._sub_device_id)},
+            name=self._sub_device_name,
+            manufacturer=self._sub_manufacturer,
+            model=self._sub_model,
+            via_device=(DOMAIN, self.coordinator.device_key),
+        )

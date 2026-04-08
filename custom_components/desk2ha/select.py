@@ -16,6 +16,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import Desk2HACoordinator
 from .entity import Desk2HAEntity
+from .helpers import extract_displays
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,10 +67,6 @@ DISPLAY_SELECT_DEFS: list[SelectDef] = [
 ]
 
 
-def _extract_displays(data: dict[str, Any]) -> list[dict[str, Any]]:
-    return [d for d in data.get("displays", []) if isinstance(d, dict)]
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -79,7 +76,7 @@ async def async_setup_entry(
     coordinator: Desk2HACoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[SelectEntity] = []
 
-    displays = _extract_displays(coordinator.data or {})
+    displays = extract_displays(coordinator.data or {})
 
     for i, display in enumerate(displays):
         target = display.get("id", f"display.{i}")
