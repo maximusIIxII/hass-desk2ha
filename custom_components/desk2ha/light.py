@@ -12,6 +12,7 @@ from typing import Any
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
+    ATTR_COLOR_TEMP_KELVIN,
     ColorMode,
     LightEntity,
 )
@@ -22,7 +23,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import Desk2HACoordinator
 from .entity import Desk2HASubDeviceEntity
-from .helpers import display_metadata, extract_displays
+from .helpers import display_metadata, extract_displays, extract_peripherals, peripheral_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,21 @@ async def async_setup_entry(
         meta = display_metadata(display, idx, coordinator.device_key)
 
         entities.append(Desk2HADisplayLight(coordinator, target, meta["sub_device_name"], **meta))
+
+    # Litra desk lamps as lights with brightness + color temp
+    for peripheral in extract_peripherals(coordinator.data or {}):
+        dev_id = peripheral.get("id", "")
+        if not dev_id.startswith("peripheral.litra_"):
+            continue
+        if "brightness_percent" not in peripheral and "brightness_lumen" not in peripheral:
+            continue
+
+        meta = peripheral_metadata(peripheral, coordinator.device_key)
+        if not meta:
+            continue
+        entities.append(
+            Desk2HALitraLight(coordinator, dev_id, meta["sub_device_name"] or "Litra", **meta)
+        )
 
     async_add_entities(entities)
 
@@ -109,5 +125,88 @@ class Desk2HADisplayLight(Desk2HASubDeviceEntity, LightEntity):
             "display.set_power_state",
             target=self._target,
             parameters={"state": "standby"},
+        )
+        await self.coordinator.async_request_refresh()
+
+
+class Desk2HALitraLight(Desk2HASubDeviceEntity, LightEntity):
+    """Logitech Litra as a dimmable light with color temperature."""
+
+    _attr_color_mode = ColorMode.COLOR_TEMP
+    _attr_supported_color_modes = {ColorMode.COLOR_TEMP}
+    _attr_min_color_temp_kelvin = 2700
+    _attr_max_color_temp_kelvin = 6500
+    _attr_min_mireds = 153  # 6500K
+    _attr_max_mireds = 370  # 2700K
+
+    def __init__(
+        self,
+        coordinator: Desk2HACoordinator,
+        peripheral_id: str,
+        name: str,
+        **sub_kwargs: Any,
+    ) -> None:
+        super().__init__(coordinator, f"{peripheral_id}.light", name, **sub_kwargs)
+        self._peripheral_id = peripheral_id
+
+    @property
+    def brightness(self) -> int | None:
+        val = self._find_metric(
+            self.coordinator.data or {},
+            f"{self._peripheral_id}.brightness_percent",
+        )
+        if val is not None:
+            return min(255, max(0, int(float(val) * 255 / 100)))
+        return None
+
+    @property
+    def color_temp_kelvin(self) -> int | None:
+        val = self._find_metric(
+            self.coordinator.data or {},
+            f"{self._peripheral_id}.color_temp",
+        )
+        return int(float(val)) if val is not None else None
+
+    @property
+    def is_on(self) -> bool | None:
+        val = self._find_metric(
+            self.coordinator.data or {},
+            f"{self._peripheral_id}.power",
+        )
+        if val is not None:
+            return bool(val)
+        return self.brightness is not None and self.brightness > 0
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        # Power on first
+        await self.coordinator.async_send_command(
+            "litra.set_power",
+            target=self._peripheral_id,
+            parameters={"on": True},
+        )
+        if ATTR_BRIGHTNESS in kwargs:
+            # Convert HA 0-255 to Litra 20-250 lumen
+            lumen = int(kwargs[ATTR_BRIGHTNESS] * 250 / 255)
+            lumen = max(20, min(250, lumen))
+            await self.coordinator.async_send_command(
+                "litra.set_brightness",
+                target=self._peripheral_id,
+                parameters={"lumen": lumen},
+            )
+        if ATTR_COLOR_TEMP_KELVIN in kwargs:
+            kelvin = int(kwargs[ATTR_COLOR_TEMP_KELVIN])
+            kelvin = max(2700, min(6500, kelvin))
+            await self.coordinator.async_send_command(
+                "litra.set_color_temp",
+                target=self._peripheral_id,
+                parameters={"kelvin": kelvin},
+            )
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self.coordinator.async_send_command(
+            "litra.set_power",
+            target=self._peripheral_id,
+            parameters={"on": False},
         )
         await self.coordinator.async_request_refresh()
