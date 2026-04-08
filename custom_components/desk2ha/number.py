@@ -37,9 +37,39 @@ class NumberDef:
 
 
 DISPLAY_NUMBER_DEFS: list[NumberDef] = [
-    NumberDef("brightness_percent", "Display {idx} Brightness", "display.set_brightness", "value", 0, 100, 1, "%", "mdi:brightness-6"),
-    NumberDef("contrast_percent", "Display {idx} Contrast", "display.set_contrast", "value", 0, 100, 1, "%", "mdi:contrast-box"),
-    NumberDef("volume", "Display {idx} Volume", "display.set_volume", "value", 0, 100, 1, "%", "mdi:volume-high"),
+    NumberDef(
+        "brightness_percent",
+        "Display {idx} Brightness",
+        "display.set_brightness",
+        "value",
+        0,
+        100,
+        1,
+        "%",
+        "mdi:brightness-6",
+    ),
+    NumberDef(
+        "contrast_percent",
+        "Display {idx} Contrast",
+        "display.set_contrast",
+        "value",
+        0,
+        100,
+        1,
+        "%",
+        "mdi:contrast-box",
+    ),
+    NumberDef(
+        "volume",
+        "Display {idx} Volume",
+        "display.set_volume",
+        "value",
+        0,
+        100,
+        1,
+        "%",
+        "mdi:volume-high",
+    ),
 ]
 
 

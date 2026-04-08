@@ -14,7 +14,6 @@ from typing import Any
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
-    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -42,24 +41,54 @@ class SensorDef:
 # Only metrics present in the agent response will create entities.
 KNOWN_SENSORS: dict[str, SensorDef] = {
     # System
-    "system.cpu_usage_percent": SensorDef("CPU Usage", unit="%", state_class="measurement", icon="mdi:cpu-64-bit"),
-    "system.cpu_frequency_mhz": SensorDef("CPU Frequency", unit="MHz", state_class="measurement", icon="mdi:speedometer"),
-    "system.ram_usage_percent": SensorDef("RAM Usage", unit="%", state_class="measurement", icon="mdi:memory"),
-    "system.ram_used_gb": SensorDef("RAM Used", SensorDeviceClass.DATA_SIZE, "GB", "measurement", "mdi:memory"),
-    "system.ram_total_gb": SensorDef("RAM Total", SensorDeviceClass.DATA_SIZE, "GB", "measurement", "mdi:memory"),
-    "system.swap_usage_percent": SensorDef("Swap Usage", unit="%", state_class="measurement", icon="mdi:memory"),
-    "system.disk_usage_percent": SensorDef("Disk Usage", unit="%", state_class="measurement", icon="mdi:harddisk"),
-    "system.disk_free_gb": SensorDef("Disk Free", SensorDeviceClass.DATA_SIZE, "GB", "measurement", "mdi:harddisk"),
-    "system.uptime_hours": SensorDef("System Uptime", SensorDeviceClass.DURATION, "h", "measurement", "mdi:clock-outline"),
-    "system.process_count": SensorDef("Process Count", state_class="measurement", icon="mdi:format-list-numbered"),
-    "system.net_sent_mb": SensorDef("Network Sent", SensorDeviceClass.DATA_SIZE, "MB", "total_increasing", "mdi:upload-network"),
-    "system.net_recv_mb": SensorDef("Network Received", SensorDeviceClass.DATA_SIZE, "MB", "total_increasing", "mdi:download-network"),
+    "system.cpu_usage_percent": SensorDef(
+        "CPU Usage", unit="%", state_class="measurement", icon="mdi:cpu-64-bit"
+    ),
+    "system.cpu_frequency_mhz": SensorDef(
+        "CPU Frequency", unit="MHz", state_class="measurement", icon="mdi:speedometer"
+    ),
+    "system.ram_usage_percent": SensorDef(
+        "RAM Usage", unit="%", state_class="measurement", icon="mdi:memory"
+    ),
+    "system.ram_used_gb": SensorDef(
+        "RAM Used", SensorDeviceClass.DATA_SIZE, "GB", "measurement", "mdi:memory"
+    ),
+    "system.ram_total_gb": SensorDef(
+        "RAM Total", SensorDeviceClass.DATA_SIZE, "GB", "measurement", "mdi:memory"
+    ),
+    "system.swap_usage_percent": SensorDef(
+        "Swap Usage", unit="%", state_class="measurement", icon="mdi:memory"
+    ),
+    "system.disk_usage_percent": SensorDef(
+        "Disk Usage", unit="%", state_class="measurement", icon="mdi:harddisk"
+    ),
+    "system.disk_free_gb": SensorDef(
+        "Disk Free", SensorDeviceClass.DATA_SIZE, "GB", "measurement", "mdi:harddisk"
+    ),
+    "system.uptime_hours": SensorDef(
+        "System Uptime", SensorDeviceClass.DURATION, "h", "measurement", "mdi:clock-outline"
+    ),
+    "system.process_count": SensorDef(
+        "Process Count", state_class="measurement", icon="mdi:format-list-numbered"
+    ),
+    "system.net_sent_mb": SensorDef(
+        "Network Sent", SensorDeviceClass.DATA_SIZE, "MB", "total_increasing", "mdi:upload-network"
+    ),
+    "system.net_recv_mb": SensorDef(
+        "Network Received",
+        SensorDeviceClass.DATA_SIZE,
+        "MB",
+        "total_increasing",
+        "mdi:download-network",
+    ),
     # System static info
     "system.cpu_model": SensorDef("CPU Model", icon="mdi:cpu-64-bit"),
     "system.cpu_cores": SensorDef("CPU Cores", icon="mdi:cpu-64-bit"),
     "system.cpu_threads": SensorDef("CPU Threads", icon="mdi:cpu-64-bit"),
     "system.gpu_model": SensorDef("GPU Model", icon="mdi:expansion-card"),
-    "system.gpu_vram_gb": SensorDef("GPU VRAM", SensorDeviceClass.DATA_SIZE, "GB", icon="mdi:expansion-card"),
+    "system.gpu_vram_gb": SensorDef(
+        "GPU VRAM", SensorDeviceClass.DATA_SIZE, "GB", icon="mdi:expansion-card"
+    ),
     "system.gpu_driver": SensorDef("GPU Driver", icon="mdi:expansion-card"),
     "system.screen_resolution": SensorDef("Screen Resolution", icon="mdi:monitor"),
     "system.os_name": SensorDef("OS Name", icon="mdi:microsoft-windows"),
@@ -68,48 +97,107 @@ KNOWN_SENSORS: dict[str, SensorDef] = {
     "system.bios_version": SensorDef("BIOS Version", icon="mdi:chip"),
     "system.disk_model": SensorDef("Disk Model", icon="mdi:harddisk"),
     # Thermals (standard + Dell DCM)
-    "cpu_package": SensorDef("CPU Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
-    "cpu_core_max": SensorDef("CPU Core Max Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
-    "gpu": SensorDef("GPU Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
-    "ambient": SensorDef("Ambient Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
-    "skin": SensorDef("Skin Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
-    "ssd": SensorDef("SSD Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
-    "memory": SensorDef("Memory Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
-    "pch": SensorDef("PCH Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
-    "charger": SensorDef("Charger Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
-    "battery_temp": SensorDef("Battery Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "cpu_package": SensorDef(
+        "CPU Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"
+    ),
+    "cpu_core_max": SensorDef(
+        "CPU Core Max Temperature",
+        SensorDeviceClass.TEMPERATURE,
+        "°C",
+        "measurement",
+        "mdi:thermometer",
+    ),
+    "gpu": SensorDef(
+        "GPU Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"
+    ),
+    "ambient": SensorDef(
+        "Ambient Temperature",
+        SensorDeviceClass.TEMPERATURE,
+        "°C",
+        "measurement",
+        "mdi:thermometer",
+    ),
+    "skin": SensorDef(
+        "Skin Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"
+    ),
+    "ssd": SensorDef(
+        "SSD Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"
+    ),
+    "memory": SensorDef(
+        "Memory Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"
+    ),
+    "pch": SensorDef(
+        "PCH Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"
+    ),
+    "charger": SensorDef(
+        "Charger Temperature",
+        SensorDeviceClass.TEMPERATURE,
+        "°C",
+        "measurement",
+        "mdi:thermometer",
+    ),
+    "battery_temp": SensorDef(
+        "Battery Temperature",
+        SensorDeviceClass.TEMPERATURE,
+        "°C",
+        "measurement",
+        "mdi:thermometer",
+    ),
     # Fans (Dell DCM)
     "fan.cpu": SensorDef("CPU Fan Speed", icon="mdi:fan", unit="/min", state_class="measurement"),
     "fan.gpu": SensorDef("GPU Fan Speed", icon="mdi:fan", unit="/min", state_class="measurement"),
     # Power (Dell DCM)
-    "power.ac_adapter_watts": SensorDef("AC Adapter Wattage", SensorDeviceClass.POWER, "W", "measurement", "mdi:power-plug"),
+    "power.ac_adapter_watts": SensorDef(
+        "AC Adapter Wattage", SensorDeviceClass.POWER, "W", "measurement", "mdi:power-plug"
+    ),
     # Battery
-    "battery.level_percent": SensorDef("Battery Level", SensorDeviceClass.BATTERY, "%", "measurement"),
+    "battery.level_percent": SensorDef(
+        "Battery Level", SensorDeviceClass.BATTERY, "%", "measurement"
+    ),
     "battery.state": SensorDef("Battery State", icon="mdi:battery-charging"),
-    "battery.time_remaining_seconds": SensorDef("Battery Time Remaining", SensorDeviceClass.DURATION, "s", "measurement", "mdi:battery-clock"),
+    "battery.time_remaining_seconds": SensorDef(
+        "Battery Time Remaining",
+        SensorDeviceClass.DURATION,
+        "s",
+        "measurement",
+        "mdi:battery-clock",
+    ),
     "battery.cycle_count": SensorDef("Battery Cycles", state_class="measurement"),
     "battery.health_percent": SensorDef("Battery Health", unit="%", state_class="measurement"),
     # Power
-    "power.consumption_watts": SensorDef("Power Consumption", SensorDeviceClass.POWER, "W", "measurement"),
+    "power.consumption_watts": SensorDef(
+        "Power Consumption", SensorDeviceClass.POWER, "W", "measurement"
+    ),
     "power.source": SensorDef("Power Source", icon="mdi:power-plug"),
     "power.usb_pd_connected": SensorDef("USB PD Connected", icon="mdi:usb-port"),
     "power.charging": SensorDef("Charging", icon="mdi:battery-charging"),
-    "power.design_voltage": SensorDef("Design Voltage", SensorDeviceClass.VOLTAGE, "V", "measurement", "mdi:flash"),
+    "power.design_voltage": SensorDef(
+        "Design Voltage", SensorDeviceClass.VOLTAGE, "V", "measurement", "mdi:flash"
+    ),
     # Agent
     "agent.version": SensorDef("Agent Version", icon="mdi:information"),
-    "agent.uptime": SensorDef("Agent Uptime", SensorDeviceClass.DURATION, "s", "measurement", "mdi:clock-outline"),
+    "agent.uptime": SensorDef(
+        "Agent Uptime", SensorDeviceClass.DURATION, "s", "measurement", "mdi:clock-outline"
+    ),
 }
 
 # Metric keys to skip as sensors (handled by other platforms)
 _SKIP_KEYS = {
-    "schema_version", "agent_version", "device_key", "snapshot_timestamp",
+    "schema_version",
+    "agent_version",
+    "device_key",
+    "snapshot_timestamp",
 }
 
 # Display metrics handled by number/select platforms (skip as sensors)
 _DISPLAY_CONTROL_KEYS = {
-    "brightness_percent", "contrast_percent", "volume",
-    "input_source", "power_state",
-    "kvm_active_pc", "pbp_mode",
+    "brightness_percent",
+    "contrast_percent",
+    "volume",
+    "input_source",
+    "power_state",
+    "kvm_active_pc",
+    "pbp_mode",
 }
 
 
@@ -150,7 +238,8 @@ def _make_name(metric_key: str) -> str:
         name_part = ".".join(parts[1:])
     elif len(parts) >= 3 and parts[0] in ("display", "peripheral", "audio"):
         # display.0.model -> Display 0 Model
-        return f"{parts[0].title()} {parts[1]} {' '.join(p.replace('_', ' ').title() for p in parts[2:])}"
+        suffix = " ".join(p.replace("_", " ").title() for p in parts[2:])
+        return f"{parts[0].title()} {parts[1]} {suffix}"
     else:
         name_part = metric_key
 

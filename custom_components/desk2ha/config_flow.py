@@ -6,13 +6,10 @@ from typing import Any
 
 import aiohttp
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import callback
 
 from .const import (
-    CONF_AGENT_HOST,
-    CONF_AGENT_PORT,
     CONF_AGENT_TOKEN,
     CONF_AGENT_URL,
     CONF_DEVICE_KEY,
@@ -29,9 +26,7 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle setup method selection."""
         if user_input is not None:
             method = user_input["method"]
@@ -102,9 +97,7 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_zeroconf(
-        self, discovery_info: Any
-    ) -> ConfigFlowResult:
+    async def async_step_zeroconf(self, discovery_info: Any) -> ConfigFlowResult:
         """Handle Zeroconf discovery."""
         host = discovery_info.host
         port = discovery_info.port or DEFAULT_PORT
@@ -162,21 +155,21 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def _fetch_health(self, url: str) -> dict[str, Any]:
-        async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=5)
-        ) as session:
-            async with session.get(f"{url}/v1/health") as resp:
-                resp.raise_for_status()
-                return await resp.json()
+        async with (
+            aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session,
+            session.get(f"{url}/v1/health") as resp,
+        ):
+            resp.raise_for_status()
+            return await resp.json()
 
     async def _fetch_agent_info(self, url: str, token: str) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {token}"} if token else {}
-        async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=10)
-        ) as session:
-            async with session.get(f"{url}/v1/info", headers=headers) as resp:
-                resp.raise_for_status()
-                return await resp.json()
+        async with (
+            aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session,
+            session.get(f"{url}/v1/info", headers=headers) as resp,
+        ):
+            resp.raise_for_status()
+            return await resp.json()
 
     @staticmethod
     @callback
@@ -190,9 +183,7 @@ class Desk2HAOptionsFlow(OptionsFlow):
     def __init__(self, config_entry: Any) -> None:
         self._config_entry = config_entry
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 

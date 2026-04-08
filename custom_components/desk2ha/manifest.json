@@ -9,7 +9,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/maximusIIxII/hass-desk2ha/issues",
   "requirements": [],
-  "zeroconf": ["_desk2ha._tcp.local."],
   "ssdp": [],
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "zeroconf": ["_desk2ha._tcp.local."]
 }
