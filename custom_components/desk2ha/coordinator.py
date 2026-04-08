@@ -1,0 +1,82 @@
+"""DataUpdateCoordinator for Desk2HA."""
+
+from __future__ import annotations
+
+import logging
+from datetime import timedelta
+from typing import Any
+
+import aiohttp
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
+from .const import CONF_AGENT_TOKEN, CONF_AGENT_URL, CONF_POLL_INTERVAL, DEFAULT_SCAN_INTERVAL
+
+logger = logging.getLogger(__name__)
+
+
+class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """Fetch data from a Desk2HA agent."""
+
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        self._url = entry.data[CONF_AGENT_URL]
+        self._token = entry.data.get(CONF_AGENT_TOKEN)
+        interval = entry.options.get(CONF_POLL_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        self._session: aiohttp.ClientSession | None = None
+        self.agent_info: dict[str, Any] = {}
+
+        super().__init__(
+            hass,
+            logger,
+            name=f"Desk2HA ({self._url})",
+            update_interval=timedelta(seconds=interval),
+        )
+
+    @property
+    def device_key(self) -> str:
+        return self.agent_info.get("device_key", "unknown")
+
+    @property
+    def headers(self) -> dict[str, str]:
+        h: dict[str, str] = {}
+        if self._token:
+            h["Authorization"] = f"Bearer {self._token}"
+        return h
+
+    async def _ensure_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=10)
+            )
+        return self._session
+
+    async def async_shutdown(self) -> None:
+        if self._session and not self._session.closed:
+            await self._session.close()
+
+    async def fetch_info(self) -> dict[str, Any]:
+        """Fetch /v1/info from agent."""
+        session = await self._ensure_session()
+        try:
+            async with session.get(
+                f"{self._url}/v1/info", headers=self.headers
+            ) as resp:
+                resp.raise_for_status()
+                self.agent_info = await resp.json()
+                return self.agent_info
+        except Exception as exc:
+            raise UpdateFailed(f"Cannot fetch agent info: {exc}") from exc
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch /v1/metrics from agent."""
+        session = await self._ensure_session()
+        try:
+            async with session.get(
+                f"{self._url}/v1/metrics", headers=self.headers
+            ) as resp:
+                resp.raise_for_status()
+                return await resp.json()
+        except aiohttp.ClientError as exc:
+            raise UpdateFailed(f"Cannot fetch metrics: {exc}") from exc
