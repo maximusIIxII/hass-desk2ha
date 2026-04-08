@@ -69,6 +69,31 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except Exception as exc:
             raise UpdateFailed(f"Cannot fetch agent info: {exc}") from exc
 
+    async def async_send_command(
+        self,
+        command: str,
+        target: str | None = None,
+        parameters: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Send a command to the agent via POST /v1/commands."""
+        session = await self._ensure_session()
+        payload: dict[str, Any] = {"command": command}
+        if target:
+            payload["target"] = target
+        if parameters:
+            payload["parameters"] = parameters
+
+        try:
+            async with session.post(
+                f"{self._url}/v1/commands",
+                headers=self.headers,
+                json=payload,
+            ) as resp:
+                resp.raise_for_status()
+                return await resp.json()
+        except Exception as exc:
+            raise UpdateFailed(f"Command failed: {exc}") from exc
+
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch /v1/metrics from agent."""
         session = await self._ensure_session()
