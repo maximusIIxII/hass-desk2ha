@@ -15,16 +15,24 @@ def extract_peripherals(data: dict[str, Any]) -> list[dict[str, Any]]:
     return [d for d in data.get("peripherals", []) if isinstance(d, dict)]
 
 
+def _get_value(raw: Any) -> str:
+    """Extract string value from a metric (dict with 'value' or plain)."""
+    if isinstance(raw, dict) and "value" in raw:
+        return str(raw["value"]).strip()
+    return str(raw).strip() if raw else ""
+
+
 def display_metadata(display: dict[str, Any], idx: str, device_key: str) -> dict[str, str | None]:
     """Extract display metadata for sub-device creation."""
-    model_raw = display.get("model", {})
-    model = model_raw.get("value", "") if isinstance(model_raw, dict) else str(model_raw)
-    mfg_raw = display.get("manufacturer", {})
-    mfg = mfg_raw.get("value", "") if isinstance(mfg_raw, dict) else str(mfg_raw)
+    model = _get_value(display.get("model", ""))
+    mfg = _get_value(display.get("manufacturer", ""))
+
+    # Use model as name (don't repeat manufacturer)
+    name = model or f"Display {idx}"
 
     return {
         "sub_device_id": f"{device_key}_display_{idx}",
-        "sub_device_name": f"{mfg} {model}".strip() or f"Display {idx}",
+        "sub_device_name": name,
         "sub_manufacturer": mfg or None,
         "sub_model": model or None,
     }
@@ -33,14 +41,34 @@ def display_metadata(display: dict[str, Any], idx: str, device_key: str) -> dict
 def peripheral_metadata(peripheral: dict[str, Any], device_key: str) -> dict[str, str | None]:
     """Extract peripheral metadata for sub-device creation."""
     dev_id = peripheral.get("id", "unknown")
-    model_raw = peripheral.get("model", {})
-    model = model_raw.get("value", "") if isinstance(model_raw, dict) else str(model_raw)
-    mfg_raw = peripheral.get("manufacturer", {})
-    mfg = mfg_raw.get("value", "") if isinstance(mfg_raw, dict) else str(mfg_raw)
+    model = _get_value(peripheral.get("model", ""))
+    mfg = _get_value(peripheral.get("manufacturer", ""))
+
+    # Skip generic/unknown USB devices (no sub-device)
+    if _is_generic_usb(model):
+        return {}
+
+    # Use model as name (don't repeat manufacturer)
+    name = model or dev_id
 
     return {
         "sub_device_id": f"{device_key}_{dev_id}",
-        "sub_device_name": f"{mfg} {model}".strip() or dev_id,
+        "sub_device_name": name,
         "sub_manufacturer": mfg or None,
         "sub_model": model or None,
     }
+
+
+def _is_generic_usb(model: str) -> bool:
+    """Check if a USB device name is generic/unhelpful."""
+    lower = model.lower()
+    return any(
+        g in lower
+        for g in [
+            "usb-eingabe",
+            "usb-verbund",
+            "usb input",
+            "usb composite",
+            "usb hub",
+        ]
+    )
