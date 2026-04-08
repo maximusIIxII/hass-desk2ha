@@ -67,8 +67,22 @@ KNOWN_SENSORS: dict[str, SensorDef] = {
     "system.os_build": SensorDef("OS Build", icon="mdi:microsoft-windows"),
     "system.bios_version": SensorDef("BIOS Version", icon="mdi:chip"),
     "system.disk_model": SensorDef("Disk Model", icon="mdi:harddisk"),
-    # Thermals
+    # Thermals (standard + Dell DCM)
     "cpu_package": SensorDef("CPU Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "cpu_core_max": SensorDef("CPU Core Max Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "gpu": SensorDef("GPU Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "ambient": SensorDef("Ambient Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "skin": SensorDef("Skin Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "ssd": SensorDef("SSD Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "memory": SensorDef("Memory Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "pch": SensorDef("PCH Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "charger": SensorDef("Charger Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    "battery_temp": SensorDef("Battery Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"),
+    # Fans (Dell DCM)
+    "fan.cpu": SensorDef("CPU Fan Speed", icon="mdi:fan", unit="/min", state_class="measurement"),
+    "fan.gpu": SensorDef("GPU Fan Speed", icon="mdi:fan", unit="/min", state_class="measurement"),
+    # Power (Dell DCM)
+    "power.ac_adapter_watts": SensorDef("AC Adapter Wattage", SensorDeviceClass.POWER, "W", "measurement", "mdi:power-plug"),
     # Battery
     "battery.level_percent": SensorDef("Battery Level", SensorDeviceClass.BATTERY, "%", "measurement"),
     "battery.state": SensorDef("Battery State", icon="mdi:battery-charging"),
