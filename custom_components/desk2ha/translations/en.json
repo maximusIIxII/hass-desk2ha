@@ -2,20 +2,45 @@
   "config": {
     "step": {
       "user": {
-        "title": "Connect to Desk2HA Agent",
-        "description": "Enter the hostname or IP address of the machine running the Desk2HA agent.",
+        "title": "Setup Method",
         "data": {
-          "agent_host": "Agent Host",
-          "agent_port": "Agent Port"
+          "method": "How would you like to add a device?"
+        }
+      },
+      "manual": {
+        "title": "Manual Configuration",
+        "description": "Enter the URL and optional Bearer token for the Desk2HA agent.",
+        "data": {
+          "url": "Agent URL",
+          "agent_token": "Bearer Token (optional)"
+        }
+      },
+      "zeroconf_confirm": {
+        "title": "Desk2HA Agent Discovered",
+        "description": "A Desk2HA agent was found at {name}. Enter the Bearer token to connect.",
+        "data": {
+          "agent_token": "Bearer Token"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to the Desk2HA agent.",
+      "cannot_connect": "Cannot connect to the Desk2HA agent.",
+      "invalid_auth": "Invalid Bearer token.",
       "unknown": "An unexpected error occurred."
     },
     "abort": {
-      "already_configured": "This agent is already configured."
+      "already_configured": "This device is already configured.",
+      "cannot_connect": "Cannot connect to the discovered agent."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Desk2HA Options",
+        "data": {
+          "poll_interval": "Poll Interval (seconds)"
+        }
+      }
     }
   }
 }
