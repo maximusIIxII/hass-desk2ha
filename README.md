@@ -4,34 +4,65 @@
 
 Multi-vendor desktop monitoring integration for [Home Assistant](https://www.home-assistant.io/).
 
-Works with the [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent)
-running on your Windows, Linux, or macOS machine.
+Brings your entire desk — PC, monitors, peripherals — into Home Assistant. Works with the [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) running on Windows, Linux, or macOS.
 
-## Features
+## What you get
 
-- **Multi-vendor**: Dell, HP, Lenovo, Logitech, Corsair, SteelSeries
-- **Full device tree**: Host PC + monitors + peripherals as HA devices
-- **DDC/CI monitor control**: Brightness, input source, power
-- **Peripheral batteries**: BLE, HID, and vendor-specific battery levels
-- **Agent lifecycle**: Install, update, and configure agents from HA
+- **50+ sensors**: CPU, RAM, disk, battery, GPU, thermals, fan speeds, network, OS info
+- **Display controls**: Brightness, contrast, volume, input source, KVM switch, PBP mode
+- **Peripheral batteries**: HID, BLE, headsets (via HeadsetControl)
+- **Power monitoring**: USB PD charger status, AC adapter wattage
+- **Agent updates**: See available updates + install from HA
+- **Auto-discovery**: Zeroconf finds agents on your network
+- **Dynamic entities**: Only creates entities for metrics your agent actually reports
 
 ## Installation
 
 ### HACS (recommended)
 
-1. Add this repository as a custom repository in HACS
-2. Install "Desk2HA"
-3. Restart Home Assistant
-4. Go to Settings → Integrations → Add Integration → Desk2HA
+1. **HACS** → Integrations → ⋮ → **Custom Repositories**
+2. URL: `https://github.com/maximusIIxII/hass-desk2ha`
+3. Category: **Integration**
+4. Install **Desk2HA** and restart HA
+5. **Settings** → **Integrations** → **Add Integration** → **Desk2HA**
 
 ### Manual
 
-Copy `custom_components/desk2ha/` to your HA `custom_components/` directory.
+Copy `custom_components/desk2ha/` to your HA `custom_components/` directory and restart.
 
-## Configuration
+## Setup
 
-The integration is configured through the Home Assistant UI (Config Flow).
-No YAML configuration needed.
+The [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) must be running on the target machine.
+
+1. Install the agent: `pip install desk2ha-agent`
+2. Start it with a config file (see agent README)
+3. In HA, add the Desk2HA integration:
+   - **URL**: `http://<agent-ip>:9693`
+   - **Token**: The auth token from your agent config
+
+Or let Zeroconf auto-discover the agent on your network.
+
+## Entity Platforms
+
+| Platform | Examples |
+|----------|---------|
+| **Sensor** | CPU Usage, RAM, Battery Level, GPU Model, Fan Speed, Display Model |
+| **Binary Sensor** | On AC Power |
+| **Number** | Display Brightness, Contrast, Volume (per display) |
+| **Select** | Display Input Source, Power State, KVM Switch, PBP Mode |
+| **Button** | Refresh Data, Restart Agent |
+| **Update** | Agent version check + install |
+
+## Options
+
+In the integration options you can configure:
+- **Poll interval**: How often to fetch metrics (default: 30s, min: 10s)
+
+## Requirements
+
+- Home Assistant 2024.12.0+
+- [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) running on the target machine
+- Network connectivity between HA and the agent (HTTP port 9693 or MQTT)
 
 ## License
 
