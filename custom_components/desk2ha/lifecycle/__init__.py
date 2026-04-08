@@ -1,1 +1,1 @@
-"""Agent lifecycle management — install, update, configure."""
+"""Agent lifecycle management (install, update, configure)."""
