@@ -1,8 +1,12 @@
-"""Number platform for Desk2HA."""
+"""Number platform for Desk2HA.
+
+Dynamically creates number entities for each display reported by the agent.
+"""
 
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 from homeassistant.components.number import NumberEntity, NumberMode
@@ -17,66 +21,73 @@ from .entity import Desk2HAEntity
 logger = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True, slots=True)
+class NumberDef:
+    """Definition for a display number control."""
+
+    suffix: str
+    name_template: str
+    command: str
+    param_key: str
+    min_value: float
+    max_value: float
+    step: float
+    unit: str | None = None
+    icon: str | None = None
+
+
+DISPLAY_NUMBER_DEFS: list[NumberDef] = [
+    NumberDef("brightness_percent", "Display {idx} Brightness", "display.set_brightness", "value", 0, 100, 1, "%", "mdi:brightness-6"),
+    NumberDef("contrast_percent", "Display {idx} Contrast", "display.set_contrast", "value", 0, 100, 1, "%", "mdi:contrast-box"),
+    NumberDef("volume", "Display {idx} Volume", "display.set_volume", "value", 0, 100, 1, "%", "mdi:volume-high"),
+]
+
+
+def _extract_displays(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract display entries from metrics data."""
+    return [d for d in data.get("displays", []) if isinstance(d, dict)]
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Set up Desk2HA number entities dynamically per display."""
     coordinator: Desk2HACoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[NumberEntity] = []
 
-    # Display brightness (per display from agent data)
-    entities.append(
-        Desk2HANumber(
-            coordinator=coordinator,
-            metric_key="display.0.brightness_percent",
-            name="Display Brightness",
-            command="display.set_brightness",
-            target="display.0",
-            param_key="value",
-            min_value=0,
-            max_value=100,
-            step=1,
-            unit="%",
-            icon="mdi:brightness-6",
-        )
-    )
+    displays = _extract_displays(coordinator.data or {})
 
-    # Display contrast
-    entities.append(
-        Desk2HANumber(
-            coordinator=coordinator,
-            metric_key="display.0.contrast_percent",
-            name="Display Contrast",
-            command="display.set_contrast",
-            target="display.0",
-            param_key="value",
-            min_value=0,
-            max_value=100,
-            step=1,
-            unit="%",
-            icon="mdi:contrast-box",
-        )
-    )
+    for i, display in enumerate(displays):
+        target = display.get("id", f"display.{i}")
+        idx = target.split(".")[-1] if "." in target else str(i)
 
-    # Display volume
-    entities.append(
-        Desk2HANumber(
-            coordinator=coordinator,
-            metric_key="display.0.volume",
-            name="Display Volume",
-            command="display.set_volume",
-            target="display.0",
-            param_key="value",
-            min_value=0,
-            max_value=100,
-            step=1,
-            unit="%",
-            icon="mdi:volume-high",
-        )
-    )
+        for defn in DISPLAY_NUMBER_DEFS:
+            if defn.suffix not in display:
+                continue
+            name = defn.name_template.format(idx=idx)
+            # Single display: drop index from name
+            if len(displays) == 1:
+                name = name.replace(f" {idx} ", " ")
+            entities.append(
+                Desk2HANumber(
+                    coordinator=coordinator,
+                    metric_key=f"{target}.{defn.suffix}",
+                    name=name,
+                    command=defn.command,
+                    target=target,
+                    param_key=defn.param_key,
+                    min_value=defn.min_value,
+                    max_value=defn.max_value,
+                    step=defn.step,
+                    unit=defn.unit,
+                    icon=defn.icon,
+                )
+            )
 
     async_add_entities(entities)
+    logger.info("Created %d number entities for %d display(s)", len(entities), len(displays))
 
 
 class Desk2HANumber(Desk2HAEntity, NumberEntity):
