@@ -48,20 +48,27 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
         """Get the current metric value from coordinator data."""
         if self.coordinator.data is None:
             return None
-        # Navigate nested data structure
         return self._find_metric(self.coordinator.data, self._metric_key)
 
-    def _find_metric(self, data: dict[str, Any], key: str) -> Any:
-        """Find a metric value in the nested response data."""
-        # Try direct key access (for flat metrics like thermals)
+    @staticmethod
+    def _find_metric(data: dict[str, Any], key: str) -> Any:
+        """Find a metric value in the nested response data.
+
+        Handles multiple response shapes:
+        - Top-level keys with value wrapper: ``{"cpu_package": {"value": 65}}``
+        - Nested category dicts: ``{"system": {"cpu_usage_percent": {"value": 5}}}``
+        - Device arrays: ``{"displays": [{"id": "display.0", "brightness_percent": {"value": 61}}]}``
+        """
+        # 1. Direct top-level key (e.g. "cpu_package")
         if key in data:
             val = data[key]
             if isinstance(val, dict) and "value" in val:
                 return val["value"]
             return val
 
-        # Try category.key (e.g., "battery.level_percent")
-        parts = key.split(".", 1)
+        parts = key.split(".")
+
+        # 2. category.metric (e.g. "system.cpu_usage_percent", "battery.state")
         if len(parts) == 2:
             category = data.get(parts[0])
             if isinstance(category, dict):
@@ -69,5 +76,27 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
                 if isinstance(sub, dict) and "value" in sub:
                     return sub["value"]
                 return sub
+
+        # 3. Device array: "display.0.brightness_percent" -> displays[0].brightness_percent
+        if len(parts) >= 3:
+            # Map singular key prefix to plural array key
+            array_key_map = {
+                "display": "displays",
+                "peripheral": "peripherals",
+                "audio": "audio",
+            }
+            array_key = array_key_map.get(parts[0], f"{parts[0]}s")
+            devices = data.get(array_key, [])
+            if isinstance(devices, list):
+                target_id = f"{parts[0]}.{parts[1]}"
+                metric_name = ".".join(parts[2:])
+                for dev in devices:
+                    if not isinstance(dev, dict):
+                        continue
+                    if dev.get("id") == target_id:
+                        val = dev.get(metric_name)
+                        if isinstance(val, dict) and "value" in val:
+                            return val["value"]
+                        return val
 
         return None
