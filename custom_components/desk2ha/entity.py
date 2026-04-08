@@ -34,6 +34,17 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
         info = self.coordinator.agent_info
         hw = info.get("hardware", {})
         identity = info.get("identity", {})
+        config = info.get("config", {})
+        http_config = config.get("http", {})
+
+        # Build configuration URL from agent info
+        config_url = None
+        if http_config.get("enabled"):
+            port = http_config.get("port", 9693)
+            hostname = identity.get("hostname", "")
+            if hostname:
+                config_url = f"http://{hostname}:{port}"
+
         return DeviceInfo(
             identifiers={(DOMAIN, self._device_key)},
             name=f"{hw.get('manufacturer', 'Unknown')} {hw.get('model', self._device_key)}",
@@ -41,6 +52,7 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
             model=hw.get("model"),
             serial_number=identity.get("serial_number"),
             sw_version=info.get("agent_version"),
+            configuration_url=config_url,
         )
 
     @property
