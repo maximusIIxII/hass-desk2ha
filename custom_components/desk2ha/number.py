@@ -16,7 +16,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import Desk2HACoordinator
-from .entity import Desk2HAEntity
+from .entity import Desk2HASubDeviceEntity
 
 logger = logging.getLogger(__name__)
 
@@ -93,18 +93,22 @@ async def async_setup_entry(
         target = display.get("id", f"display.{i}")
         idx = target.split(".")[-1] if "." in target else str(i)
 
+        # Extract display metadata for sub-device
+        model_raw = display.get("model", {})
+        model_name = model_raw.get("value", "") if isinstance(model_raw, dict) else str(model_raw)
+        mfg_raw = display.get("manufacturer", {})
+        mfg_name = mfg_raw.get("value", "") if isinstance(mfg_raw, dict) else str(mfg_raw)
+        sub_id = f"{coordinator.device_key}_{target}"
+        sub_name = f"{mfg_name} {model_name}".strip() or f"Display {idx}"
+
         for defn in DISPLAY_NUMBER_DEFS:
             if defn.suffix not in display:
                 continue
-            name = defn.name_template.format(idx=idx)
-            # Single display: drop index from name
-            if len(displays) == 1:
-                name = name.replace(f" {idx} ", " ")
             entities.append(
                 Desk2HANumber(
                     coordinator=coordinator,
                     metric_key=f"{target}.{defn.suffix}",
-                    name=name,
+                    name=defn.name_template.format(idx=idx).replace(f"Display {idx} ", ""),
                     command=defn.command,
                     target=target,
                     param_key=defn.param_key,
@@ -113,6 +117,10 @@ async def async_setup_entry(
                     step=defn.step,
                     unit=defn.unit,
                     icon=defn.icon,
+                    sub_device_id=sub_id,
+                    sub_device_name=sub_name,
+                    sub_manufacturer=mfg_name or None,
+                    sub_model=model_name or None,
                 )
             )
 
@@ -120,7 +128,7 @@ async def async_setup_entry(
     logger.info("Created %d number entities for %d display(s)", len(entities), len(displays))
 
 
-class Desk2HANumber(Desk2HAEntity, NumberEntity):
+class Desk2HANumber(Desk2HASubDeviceEntity, NumberEntity):
     """A Desk2HA number entity for controlling values."""
 
     _attr_mode = NumberMode.SLIDER
@@ -138,8 +146,20 @@ class Desk2HANumber(Desk2HAEntity, NumberEntity):
         step: float,
         unit: str | None = None,
         icon: str | None = None,
+        sub_device_id: str = "",
+        sub_device_name: str = "",
+        sub_manufacturer: str | None = None,
+        sub_model: str | None = None,
     ) -> None:
-        super().__init__(coordinator, metric_key, name)
+        super().__init__(
+            coordinator,
+            metric_key,
+            name,
+            sub_device_id=sub_device_id,
+            sub_device_name=sub_device_name,
+            sub_manufacturer=sub_manufacturer,
+            sub_model=sub_model,
+        )
         self._command = command
         self._target = target
         self._param_key = param_key
