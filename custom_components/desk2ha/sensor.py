@@ -78,6 +78,9 @@ KNOWN_SENSORS: dict[str, SensorDef] = {
     # Power
     "power.consumption_watts": SensorDef("Power Consumption", SensorDeviceClass.POWER, "W", "measurement"),
     "power.source": SensorDef("Power Source", icon="mdi:power-plug"),
+    "power.usb_pd_connected": SensorDef("USB PD Connected", icon="mdi:usb-port"),
+    "power.charging": SensorDef("Charging", icon="mdi:battery-charging"),
+    "power.design_voltage": SensorDef("Design Voltage", SensorDeviceClass.VOLTAGE, "V", "measurement", "mdi:flash"),
     # Agent
     "agent.version": SensorDef("Agent Version", icon="mdi:information"),
     "agent.uptime": SensorDef("Agent Uptime", SensorDeviceClass.DURATION, "s", "measurement", "mdi:clock-outline"),
