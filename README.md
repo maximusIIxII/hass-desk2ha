@@ -64,6 +64,15 @@ In the integration options you can configure:
 - [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) running on the target machine
 - Network connectivity between HA and the agent (HTTP port 9693 or MQTT)
 
+## Known Issues
+
+| Issue | Workaround | Status |
+|-------|------------|--------|
+| **Duplicate sub-devices after upgrade** | Upgrading from pre-sub-device versions leaves orphaned entities. Fix: delete the integration in HA and re-add it. | Known |
+| **Display entities show "not available"** | Display controls require the agent to run interactively (not as service) for DDC/CI access. | By design |
+| **Logo not visible** | Custom component logos require HA 2026.3+ with `brand/` directory. Older HA versions won't show the icon. | HA limitation |
+| **MQTT entities duplicate HTTP entities** | If both HTTP polling and MQTT are active, the same metrics appear twice. Use one transport or the other, not both. | Planned fix |
+
 ## License
 
 Apache-2.0
