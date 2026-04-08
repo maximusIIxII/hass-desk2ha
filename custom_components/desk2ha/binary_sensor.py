@@ -1,6 +1,12 @@
-"""Binary sensor platform for Desk2HA."""
+"""Binary sensor platform for Desk2HA.
+
+Dynamically creates binary sensors from agent metrics.
+"""
 
 from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Callable
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -14,8 +20,40 @@ from .const import DOMAIN
 from .coordinator import Desk2HACoordinator
 from .entity import Desk2HAEntity
 
-BINARY_SENSOR_DEFS: dict[str, tuple[str, str | None, str | None]] = {
-    "power.source": ("On AC Power", BinarySensorDeviceClass.PLUG, "mdi:power-plug"),
+
+@dataclass(frozen=True, slots=True)
+class BinarySensorDef:
+    """Definition for a known binary sensor."""
+
+    name: str
+    metric_key: str
+    device_class: str | None = None
+    icon: str | None = None
+    is_on_fn: Callable[[Any], bool | None] = lambda v: bool(v)
+
+
+def _battery_is_on_ac(val: Any) -> bool | None:
+    """Return True when battery state indicates AC power."""
+    if val is None:
+        return None
+    if isinstance(val, str):
+        return val.lower() in ("ac", "full", "charging")
+    return bool(val)
+
+
+BINARY_SENSOR_DEFS: list[BinarySensorDef] = [
+    BinarySensorDef(
+        name="On AC Power",
+        metric_key="battery.state",
+        device_class=BinarySensorDeviceClass.PLUG,
+        icon="mdi:power-plug",
+        is_on_fn=_battery_is_on_ac,
+    ),
+]
+
+# Map metric_key -> required data key to check existence
+_EXISTENCE_CHECKS: dict[str, str] = {
+    "battery.state": "battery",
 }
 
 
@@ -24,30 +62,37 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
+    """Set up Desk2HA binary sensors from agent data."""
     coordinator: Desk2HACoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities = [
-        Desk2HABinarySensor(coordinator, key, name, device_class, icon)
-        for key, (name, device_class, icon) in BINARY_SENSOR_DEFS.items()
-    ]
+    entities: list[Desk2HABinarySensor] = []
+
+    data = coordinator.data or {}
+
+    for defn in BINARY_SENSOR_DEFS:
+        # Only create if the required data section exists
+        check_key = _EXISTENCE_CHECKS.get(defn.metric_key)
+        if check_key and check_key not in data:
+            continue
+        entities.append(Desk2HABinarySensor(coordinator, defn))
+
     async_add_entities(entities)
 
 
 class Desk2HABinarySensor(Desk2HAEntity, BinarySensorEntity):
+    """A Desk2HA binary sensor entity."""
 
-    def __init__(self, coordinator, metric_key, name, device_class=None, icon=None):
-        super().__init__(coordinator, metric_key, f"{name}_binary")
-        self._attr_unique_id = f"desk2ha_{coordinator.device_key}_{metric_key}_binary".replace(".", "_")
-        self._attr_name = name
-        if device_class:
-            self._attr_device_class = device_class
-        if icon:
-            self._attr_icon = icon
+    def __init__(
+        self,
+        coordinator: Desk2HACoordinator,
+        defn: BinarySensorDef,
+    ) -> None:
+        super().__init__(coordinator, defn.metric_key, defn.name)
+        self._is_on_fn = defn.is_on_fn
+        if defn.device_class:
+            self._attr_device_class = defn.device_class
+        if defn.icon:
+            self._attr_icon = defn.icon
 
     @property
     def is_on(self) -> bool | None:
-        val = self.metric_value
-        if val is None:
-            return None
-        if isinstance(val, str):
-            return val.lower() == "ac"
-        return bool(val)
+        return self._is_on_fn(self.metric_value)
