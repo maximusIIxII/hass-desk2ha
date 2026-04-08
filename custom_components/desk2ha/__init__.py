@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -91,41 +92,59 @@ def _cleanup_orphaned_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 
 def _cleanup_orphaned_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Remove orphaned sub-devices (generic USB, duplicates, bare manufacturer names)."""
+    """Remove orphaned sub-devices (generic USB, duplicates, stale names)."""
     dev_registry = dr.async_get(hass)
     ent_registry = er.async_get(hass)
-    devices = dr.async_entries_for_config_entry(dev_registry, entry.entry_id)
-    removed = 0
+    devices = list(dr.async_entries_for_config_entry(dev_registry, entry.entry_id))
+    removed_ids: set[str] = set()
+
+    def _remove_device(device: Any) -> None:
+        entities = er.async_entries_for_device(ent_registry, device.id)
+        for entity in entities:
+            ent_registry.async_remove(entity.entity_id)
+        dev_registry.async_remove_device(device.id)
+        removed_ids.add(device.id)
 
     for device in devices:
+        if device.id in removed_ids:
+            continue
         name = (device.name or "").lower().strip()
 
-        # Remove devices with generic/orphaned names
+        # 1. Remove devices with generic/orphaned names
         if name in _ORPHANED_DEVICE_NAMES:
-            # First remove all entities belonging to this device
-            entities = er.async_entries_for_device(ent_registry, device.id)
-            for entity in entities:
-                ent_registry.async_remove(entity.entity_id)
-            dev_registry.async_remove_device(device.id)
-            removed += 1
+            _remove_device(device)
             continue
 
-        # Remove devices that look like duplicates with manufacturer in name
-        # e.g. "Dell KM7321W Keyboard" when there's also "KM7321W Keyboard"
-        # These are from older entity schemas before _strip_manufacturer_prefix
-        if device.manufacturer and name.startswith(device.manufacturer.lower()):
-            stripped = name[len(device.manufacturer) :].strip()
-            # Check if a device with the stripped name exists
-            for other in devices:
-                other_name = (other.name or "").lower().strip()
-                if other.id != device.id and other_name == stripped:
-                    # This is the duplicate with manufacturer prefix — remove it
-                    entities = er.async_entries_for_device(ent_registry, device.id)
-                    for entity in entities:
-                        ent_registry.async_remove(entity.entity_id)
-                    dev_registry.async_remove_device(device.id)
-                    removed += 1
-                    break
+        # 2. Remove devices with manufacturer repeated in name
+        #    e.g. name="Logitech Litra Glow" + manufacturer="Logitech"
+        #    HA shows "Logitech Logitech Litra Glow"
+        if device.manufacturer:
+            mfg = device.manufacturer.lower()
+            if name.startswith(mfg + " "):
+                _remove_device(device)
+                continue
 
-    if removed:
-        logger.info("Removed %d orphaned/duplicate devices", removed)
+    # 3. Deduplicate: same model shown as two devices (old vs new schema)
+    #    Keep the device with more entities, remove the other
+    remaining = [d for d in devices if d.id not in removed_ids]
+    seen_models: dict[str, Any] = {}
+    for device in remaining:
+        # Use model as dedup key (more stable than name)
+        model = (device.model or device.name or "").lower().strip()
+        if not model:
+            continue
+        entity_count = len(er.async_entries_for_device(ent_registry, device.id))
+
+        if model in seen_models:
+            prev_device, prev_count = seen_models[model]
+            # Keep the one with more entities
+            if entity_count > prev_count:
+                _remove_device(prev_device)
+                seen_models[model] = (device, entity_count)
+            else:
+                _remove_device(device)
+        else:
+            seen_models[model] = (device, entity_count)
+
+    if removed_ids:
+        logger.info("Removed %d orphaned/duplicate devices", len(removed_ids))
