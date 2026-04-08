@@ -15,6 +15,38 @@
           "agent_token": "Bearer Token (optional)"
         }
       },
+      "install_choose_os": {
+        "title": "Remote Installation",
+        "description": "Select the operating system of the target machine where the agent will be installed.",
+        "data": {
+          "os_type": "Operating System"
+        }
+      },
+      "install_ssh": {
+        "title": "Install via SSH",
+        "description": "The agent will be installed remotely via SSH. Python 3.11+ must be available on the target machine.",
+        "data": {
+          "host": "Hostname / IP Address",
+          "ssh_port": "SSH Port",
+          "username": "Username",
+          "password": "Password",
+          "agent_port": "Agent HTTP Port"
+        }
+      },
+      "install_winrm": {
+        "title": "Install via WinRM",
+        "description": "The agent will be installed remotely via Windows Remote Management. WinRM must be enabled on the target machine.",
+        "data": {
+          "host": "Hostname / IP Address",
+          "username": "Username (DOMAIN\\user or user@domain)",
+          "password": "Password",
+          "agent_port": "Agent HTTP Port"
+        }
+      },
+      "install_complete": {
+        "title": "Installation Complete",
+        "description": "The agent has been installed and started successfully."
+      },
       "zeroconf_confirm": {
         "title": "Desk2HA Agent Discovered",
         "description": "A Desk2HA agent was found at {name}. Enter the Bearer token to connect.",
@@ -26,11 +58,13 @@
     "error": {
       "cannot_connect": "Cannot connect to the Desk2HA agent.",
       "invalid_auth": "Invalid Bearer token.",
+      "install_failed": "Remote installation failed. Check credentials and ensure Python 3.11+ is installed.",
       "unknown": "An unexpected error occurred."
     },
     "abort": {
       "already_configured": "This device is already configured.",
-      "cannot_connect": "Cannot connect to the discovered agent."
+      "cannot_connect": "Cannot connect to the discovered agent.",
+      "install_failed": "Remote installation failed."
     }
   },
   "options": {
