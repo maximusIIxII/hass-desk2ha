@@ -22,7 +22,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import Desk2HACoordinator
-from .entity import Desk2HAEntity
+from .entity import Desk2HASubDeviceEntity
+from .helpers import display_metadata, extract_displays, extract_peripherals, peripheral_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -310,14 +311,32 @@ async def async_setup_entry(
     if coordinator.data is None:
         return
 
-    flat = _flatten_metrics(coordinator.data)
+    data = coordinator.data
+    flat = _flatten_metrics(data)
     entities: list[Desk2HASensor] = []
 
+    # Build sub-device lookup for display/peripheral sensors
+    sub_device_map: dict[str, dict[str, str | None]] = {}
+    for i, display in enumerate(extract_displays(data)):
+        target = display.get("id", f"display.{i}")
+        idx = target.split(".")[-1] if "." in target else str(i)
+        meta = display_metadata(display, idx, coordinator.device_key)
+        sub_device_map[target] = meta
+    for peripheral in extract_peripherals(data):
+        dev_id = peripheral.get("id", "")
+        if dev_id:
+            meta = peripheral_metadata(peripheral, coordinator.device_key)
+            sub_device_map[dev_id] = meta
+
     for metric_key in flat:
-        # Skip display control metrics (handled by number/select)
         key_suffix = metric_key.rsplit(".", 1)[-1] if "." in metric_key else metric_key
         if metric_key.startswith("display.") and key_suffix in _DISPLAY_CONTROL_KEYS:
             continue
+
+        # Determine sub-device (display.0.xxx → display.0, peripheral.usb_3.xxx → peripheral.usb_3)
+        parts = metric_key.split(".")
+        sub_key = f"{parts[0]}.{parts[1]}" if len(parts) >= 3 else ""
+        sub_meta = sub_device_map.get(sub_key, {})
 
         defn = KNOWN_SENSORS.get(metric_key)
         if defn:
@@ -331,21 +350,26 @@ async def async_setup_entry(
                     state_class=defn.state_class,
                     icon=defn.icon,
                     diagnostic=defn.diagnostic,
+                    **sub_meta,
                 )
             )
         else:
-            # Auto-discover with suffix enrichment
             enrich = _SUFFIX_ENRICHMENT.get(key_suffix, {})
+            # Simplify name for sub-device sensors (drop prefix)
+            name = _make_name(metric_key)
+            if sub_meta:
+                name = key_suffix.replace("_", " ").title()
             entities.append(
                 Desk2HASensor(
                     coordinator=coordinator,
                     metric_key=metric_key,
-                    name=_make_name(metric_key),
+                    name=name,
                     device_class=enrich.get("device_class"),
                     unit=enrich.get("unit"),
                     state_class=enrich.get("state_class"),
                     icon=enrich.get("icon"),
                     diagnostic=enrich.get("diagnostic", False),
+                    **sub_meta,
                 )
             )
 
@@ -353,7 +377,7 @@ async def async_setup_entry(
     logger.info("Created %d sensor entities from %d metrics", len(entities), len(flat))
 
 
-class Desk2HASensor(Desk2HAEntity, SensorEntity):
+class Desk2HASensor(Desk2HASubDeviceEntity, SensorEntity):
     """A Desk2HA sensor entity."""
 
     def __init__(
@@ -366,8 +390,9 @@ class Desk2HASensor(Desk2HAEntity, SensorEntity):
         state_class: str | None = None,
         icon: str | None = None,
         diagnostic: bool = False,
+        **sub_kwargs: Any,
     ) -> None:
-        super().__init__(coordinator, metric_key, name)
+        super().__init__(coordinator, metric_key, name, **sub_kwargs)
         if device_class:
             self._attr_device_class = device_class
         if unit:
