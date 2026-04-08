@@ -38,6 +38,14 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return self.agent_info.get("device_key", "unknown")
 
     @property
+    def agent_url(self) -> str:
+        return self._url
+
+    @property
+    def agent_token(self) -> str | None:
+        return self._token
+
+    @property
     def headers(self) -> dict[str, str]:
         h: dict[str, str] = {}
         if self._token:
