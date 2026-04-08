@@ -19,10 +19,12 @@ async def async_setup_entry(
 ) -> None:
     coordinator: Desk2HACoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    async_add_entities([
-        Desk2HARefreshButton(coordinator),
-        Desk2HARestartButton(coordinator),
-    ])
+    async_add_entities(
+        [
+            Desk2HARefreshButton(coordinator),
+            Desk2HARestartButton(coordinator),
+        ]
+    )
 
 
 class Desk2HARefreshButton(Desk2HAEntity, ButtonEntity):
