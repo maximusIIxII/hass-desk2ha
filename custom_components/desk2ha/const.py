@@ -18,4 +18,4 @@ DEFAULT_SCAN_INTERVAL = 30
 SCHEMA_VERSION = "2.0.0"
 
 # Entity platforms to set up
-PLATFORMS = ["sensor", "binary_sensor", "number", "select", "button", "update"]
+PLATFORMS = ["sensor", "binary_sensor", "number", "select", "switch", "button", "update"]

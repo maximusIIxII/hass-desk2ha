@@ -16,6 +16,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -35,6 +36,7 @@ class SensorDef:
     unit: str | None = None
     state_class: str | None = None
     icon: str | None = None
+    diagnostic: bool = False
 
 
 # Known metric keys with rich metadata.
@@ -81,21 +83,23 @@ KNOWN_SENSORS: dict[str, SensorDef] = {
         "total_increasing",
         "mdi:download-network",
     ),
-    # System static info
-    "system.cpu_model": SensorDef("CPU Model", icon="mdi:cpu-64-bit"),
-    "system.cpu_cores": SensorDef("CPU Cores", icon="mdi:cpu-64-bit"),
-    "system.cpu_threads": SensorDef("CPU Threads", icon="mdi:cpu-64-bit"),
-    "system.gpu_model": SensorDef("GPU Model", icon="mdi:expansion-card"),
+    # System static info (diagnostic — shown under Diagnostics in HA)
+    "system.cpu_model": SensorDef("CPU Model", icon="mdi:cpu-64-bit", diagnostic=True),
+    "system.cpu_cores": SensorDef("CPU Cores", icon="mdi:cpu-64-bit", diagnostic=True),
+    "system.cpu_threads": SensorDef("CPU Threads", icon="mdi:cpu-64-bit", diagnostic=True),
+    "system.gpu_model": SensorDef("GPU Model", icon="mdi:expansion-card", diagnostic=True),
     "system.gpu_vram_gb": SensorDef(
-        "GPU VRAM", SensorDeviceClass.DATA_SIZE, "GB", icon="mdi:expansion-card"
+        "GPU VRAM", SensorDeviceClass.DATA_SIZE, "GB", icon="mdi:expansion-card", diagnostic=True
     ),
-    "system.gpu_driver": SensorDef("GPU Driver", icon="mdi:expansion-card"),
-    "system.screen_resolution": SensorDef("Screen Resolution", icon="mdi:monitor"),
-    "system.os_name": SensorDef("OS Name", icon="mdi:microsoft-windows"),
-    "system.os_version": SensorDef("OS Version", icon="mdi:microsoft-windows"),
-    "system.os_build": SensorDef("OS Build", icon="mdi:microsoft-windows"),
-    "system.bios_version": SensorDef("BIOS Version", icon="mdi:chip"),
-    "system.disk_model": SensorDef("Disk Model", icon="mdi:harddisk"),
+    "system.gpu_driver": SensorDef("GPU Driver", icon="mdi:expansion-card", diagnostic=True),
+    "system.screen_resolution": SensorDef(
+        "Screen Resolution", icon="mdi:monitor", diagnostic=True
+    ),
+    "system.os_name": SensorDef("OS Name", icon="mdi:microsoft-windows", diagnostic=True),
+    "system.os_version": SensorDef("OS Version", icon="mdi:microsoft-windows", diagnostic=True),
+    "system.os_build": SensorDef("OS Build", icon="mdi:microsoft-windows", diagnostic=True),
+    "system.bios_version": SensorDef("BIOS Version", icon="mdi:chip", diagnostic=True),
+    "system.disk_model": SensorDef("Disk Model", icon="mdi:harddisk", diagnostic=True),
     # Thermals (standard + Dell DCM)
     "cpu_package": SensorDef(
         "CPU Temperature", SensorDeviceClass.TEMPERATURE, "°C", "measurement", "mdi:thermometer"
@@ -189,7 +193,7 @@ _SKIP_KEYS = {
     "snapshot_timestamp",
 }
 
-# Display metrics handled by number/select platforms (skip as sensors)
+# Display metrics handled by number/select/switch platforms (skip as sensors)
 _DISPLAY_CONTROL_KEYS = {
     "brightness_percent",
     "contrast_percent",
@@ -198,6 +202,8 @@ _DISPLAY_CONTROL_KEYS = {
     "power_state",
     "kvm_active_pc",
     "pbp_mode",
+    "auto_brightness",
+    "auto_color_temp",
 }
 
 
@@ -277,6 +283,7 @@ async def async_setup_entry(
                     unit=defn.unit,
                     state_class=defn.state_class,
                     icon=defn.icon,
+                    diagnostic=defn.diagnostic,
                 )
             )
         else:
@@ -305,6 +312,7 @@ class Desk2HASensor(Desk2HAEntity, SensorEntity):
         unit: str | None = None,
         state_class: str | None = None,
         icon: str | None = None,
+        diagnostic: bool = False,
     ) -> None:
         super().__init__(coordinator, metric_key, name)
         if device_class:
@@ -315,6 +323,8 @@ class Desk2HASensor(Desk2HAEntity, SensorEntity):
             self._attr_state_class = state_class
         if icon:
             self._attr_icon = icon
+        if diagnostic:
+            self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self) -> Any:
