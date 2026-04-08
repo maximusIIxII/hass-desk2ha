@@ -25,6 +25,7 @@ PLATFORMS = [
     "select",
     "switch",
     "light",
+    "media_player",
     "button",
     "update",
 ]
