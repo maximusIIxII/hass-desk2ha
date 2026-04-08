@@ -16,7 +16,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import Desk2HACoordinator
-from .entity import Desk2HAEntity
+from .entity import Desk2HASubDeviceEntity
+from .helpers import display_metadata, extract_displays
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,10 +52,6 @@ DISPLAY_SWITCH_DEFS: list[SwitchDef] = [
 ]
 
 
-def _extract_displays(data: dict[str, Any]) -> list[dict[str, Any]]:
-    return [d for d in data.get("displays", []) if isinstance(d, dict)]
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -64,35 +61,34 @@ async def async_setup_entry(
     coordinator: Desk2HACoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[SwitchEntity] = []
 
-    displays = _extract_displays(coordinator.data or {})
+    displays = extract_displays(coordinator.data or {})
 
     for i, display in enumerate(displays):
         target = display.get("id", f"display.{i}")
         idx = target.split(".")[-1] if "." in target else str(i)
+        meta = display_metadata(display, idx, coordinator.device_key)
 
         for defn in DISPLAY_SWITCH_DEFS:
             if defn.suffix not in display:
                 continue
-            name = defn.name_template.format(idx=idx)
-            if len(displays) == 1:
-                name = name.replace(f" {idx} ", " ")
             entities.append(
                 Desk2HASwitch(
                     coordinator=coordinator,
                     metric_key=f"{target}.{defn.suffix}",
-                    name=name,
+                    name=defn.name_template.format(idx=idx).replace(f"Display {idx} ", ""),
                     command_on=defn.command_on,
                     command_off=defn.command_off,
                     target=target,
                     param_key=defn.param_key,
                     icon=defn.icon,
+                    **meta,
                 )
             )
 
     async_add_entities(entities)
 
 
-class Desk2HASwitch(Desk2HAEntity, SwitchEntity):
+class Desk2HASwitch(Desk2HASubDeviceEntity, SwitchEntity):
     """A Desk2HA switch entity for boolean display features."""
 
     def __init__(
@@ -105,8 +101,9 @@ class Desk2HASwitch(Desk2HAEntity, SwitchEntity):
         target: str,
         param_key: str,
         icon: str | None = None,
+        **sub_kwargs: Any,
     ) -> None:
-        super().__init__(coordinator, metric_key, name)
+        super().__init__(coordinator, metric_key, name, **sub_kwargs)
         self._command_on = command_on
         self._command_off = command_off
         self._target = target

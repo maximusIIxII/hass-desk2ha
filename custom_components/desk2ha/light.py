@@ -21,13 +21,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import Desk2HACoordinator
-from .entity import Desk2HAEntity
+from .entity import Desk2HASubDeviceEntity
+from .helpers import display_metadata, extract_displays
 
 logger = logging.getLogger(__name__)
-
-
-def _extract_displays(data: dict[str, Any]) -> list[dict[str, Any]]:
-    return [d for d in data.get("displays", []) if isinstance(d, dict)]
 
 
 async def async_setup_entry(
@@ -39,7 +36,7 @@ async def async_setup_entry(
     coordinator: Desk2HACoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[LightEntity] = []
 
-    displays = _extract_displays(coordinator.data or {})
+    displays = extract_displays(coordinator.data or {})
 
     for i, display in enumerate(displays):
         if "brightness_percent" not in display:
@@ -47,20 +44,14 @@ async def async_setup_entry(
 
         target = display.get("id", f"display.{i}")
         idx = target.split(".")[-1] if "." in target else str(i)
+        meta = display_metadata(display, idx, coordinator.device_key)
 
-        model = display.get("model", {})
-        model_name = model.get("value", "") if isinstance(model, dict) else str(model)
-
-        name = f"Display {model_name}" if model_name else f"Display {idx}"
-        if len(displays) == 1 and model_name:
-            name = f"Display {model_name}"
-
-        entities.append(Desk2HADisplayLight(coordinator, target, name))
+        entities.append(Desk2HADisplayLight(coordinator, target, meta["sub_device_name"], **meta))
 
     async_add_entities(entities)
 
 
-class Desk2HADisplayLight(Desk2HAEntity, LightEntity):
+class Desk2HADisplayLight(Desk2HASubDeviceEntity, LightEntity):
     """A display represented as a dimmable light."""
 
     _attr_color_mode = ColorMode.BRIGHTNESS
@@ -71,8 +62,9 @@ class Desk2HADisplayLight(Desk2HAEntity, LightEntity):
         coordinator: Desk2HACoordinator,
         target: str,
         name: str,
+        **sub_kwargs: Any,
     ) -> None:
-        super().__init__(coordinator, f"{target}.light", name)
+        super().__init__(coordinator, f"{target}.light", name, **sub_kwargs)
         self._target = target
         self._brightness_key = f"{target}.brightness_percent"
         self._power_key = f"{target}.power_state"

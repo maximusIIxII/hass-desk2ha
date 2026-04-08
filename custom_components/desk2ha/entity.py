@@ -115,10 +115,11 @@ class Desk2HASubDeviceEntity(Desk2HAEntity):
         coordinator: Desk2HACoordinator,
         metric_key: str,
         name: str,
-        sub_device_id: str,
-        sub_device_name: str,
+        sub_device_id: str = "",
+        sub_device_name: str = "",
         sub_manufacturer: str | None = None,
         sub_model: str | None = None,
+        **_kwargs: Any,
     ) -> None:
         super().__init__(coordinator, metric_key, name)
         self._sub_device_id = sub_device_id
@@ -128,7 +129,9 @@ class Desk2HASubDeviceEntity(Desk2HAEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        """Return sub-device info (linked via main device)."""
+        """Return sub-device info, or host device if no sub_device_id."""
+        if not self._sub_device_id:
+            return super().device_info
         return DeviceInfo(
             identifiers={(DOMAIN, self._sub_device_id)},
             name=self._sub_device_name,

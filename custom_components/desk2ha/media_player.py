@@ -20,13 +20,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import Desk2HACoordinator
-from .entity import Desk2HAEntity
+from .entity import Desk2HASubDeviceEntity
+from .helpers import display_metadata, extract_displays
 
 logger = logging.getLogger(__name__)
-
-
-def _extract_displays(data: dict[str, Any]) -> list[dict[str, Any]]:
-    return [d for d in data.get("displays", []) if isinstance(d, dict)]
 
 
 async def async_setup_entry(
@@ -38,7 +35,7 @@ async def async_setup_entry(
     coordinator: Desk2HACoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[MediaPlayerEntity] = []
 
-    displays = _extract_displays(coordinator.data or {})
+    displays = extract_displays(coordinator.data or {})
 
     for i, display in enumerate(displays):
         if "volume" not in display:
@@ -46,20 +43,14 @@ async def async_setup_entry(
 
         target = display.get("id", f"display.{i}")
         idx = target.split(".")[-1] if "." in target else str(i)
+        meta = display_metadata(display, idx, coordinator.device_key)
 
-        model = display.get("model", {})
-        model_name = model.get("value", "") if isinstance(model, dict) else str(model)
-
-        name = f"Display {model_name} Speaker" if model_name else f"Display {idx} Speaker"
-        if len(displays) == 1 and model_name:
-            name = f"{model_name} Speaker"
-
-        entities.append(Desk2HADisplaySpeaker(coordinator, target, name))
+        entities.append(Desk2HADisplaySpeaker(coordinator, target, "Speaker", **meta))
 
     async_add_entities(entities)
 
 
-class Desk2HADisplaySpeaker(Desk2HAEntity, MediaPlayerEntity):
+class Desk2HADisplaySpeaker(Desk2HASubDeviceEntity, MediaPlayerEntity):
     """Display speaker as a media player for volume control."""
 
     _attr_device_class = MediaPlayerDeviceClass.SPEAKER
@@ -72,8 +63,9 @@ class Desk2HADisplaySpeaker(Desk2HAEntity, MediaPlayerEntity):
         coordinator: Desk2HACoordinator,
         target: str,
         name: str,
+        **sub_kwargs: Any,
     ) -> None:
-        super().__init__(coordinator, f"{target}.speaker", name)
+        super().__init__(coordinator, f"{target}.speaker", name, **sub_kwargs)
         self._target = target
         self._volume_key = f"{target}.volume"
         self._power_key = f"{target}.power_state"
