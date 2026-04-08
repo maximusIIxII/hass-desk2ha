@@ -1,0 +1,27 @@
+fleet_status:
+  name: Fleet Status
+  description: Get status of all configured Desk2HA desks (online/offline, agent versions, collectors).
+
+refresh:
+  name: Refresh
+  description: Force-refresh metrics from one or all desks.
+  fields:
+    device_key:
+      name: Device Key
+      description: Specific desk to refresh (leave empty for all desks).
+      required: false
+      example: "ST-EXAMPLE01"
+      selector:
+        text:
+
+restart_agent:
+  name: Restart Agent
+  description: Send a restart command to a remote Desk2HA agent.
+  fields:
+    device_key:
+      name: Device Key
+      description: Device key of the desk whose agent should be restarted.
+      required: true
+      example: "ST-EXAMPLE01"
+      selector:
+        text:
