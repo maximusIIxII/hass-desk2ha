@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 import voluptuous as vol
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 SERVICE_FLEET_STATUS = "fleet_status"
 SERVICE_REFRESH = "refresh"
 SERVICE_RESTART_AGENT = "restart_agent"
+SERVICE_FETCH_IMAGES = "fetch_product_images"
 
 FLEET_STATUS_SCHEMA = vol.Schema({})
 REFRESH_SCHEMA = vol.Schema(
@@ -122,6 +124,48 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         except Exception:
             logger.exception("Failed to restart agent %s", device_key)
 
+    async def handle_fetch_images(call: ServiceCall) -> None:
+        """Fetch product images for all configured desks."""
+        import aiohttp
+
+        from .images.cache import ImageCache
+        from .images.resolver import resolve_image_url
+
+        cache_dir = (
+            Path(hass.config.config_dir) / "custom_components" / DOMAIN / "images" / "cache"
+        )
+        cache = ImageCache(cache_dir)
+        coordinators = _get_coordinators(hass)
+        fetched = 0
+
+        async with aiohttp.ClientSession() as session:
+            for device_key, coordinator in coordinators.items():
+                # Skip if already cached
+                if cache.get(device_key):
+                    logger.debug("Image already cached for %s", device_key)
+                    continue
+
+                # Build device info from agent_info
+                info = coordinator.agent_info
+                if not info:
+                    continue
+
+                hw = info.get("hardware", {})
+                identity = info.get("identity", {})
+                device_info = {
+                    "manufacturer": hw.get("manufacturer", ""),
+                    "model": hw.get("model", ""),
+                    "service_tag": identity.get("service_tag", ""),
+                }
+
+                url = await resolve_image_url(device_info, session)
+                if url:
+                    result = await cache.fetch_and_store(device_key, url, session)
+                    if result:
+                        fetched += 1
+
+        logger.info("Fetched %d product images for %d desks", fetched, len(coordinators))
+
     hass.services.async_register(
         DOMAIN, SERVICE_FLEET_STATUS, handle_fleet_status, schema=FLEET_STATUS_SCHEMA
     )
@@ -129,11 +173,19 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN, SERVICE_RESTART_AGENT, handle_restart_agent, schema=RESTART_SCHEMA
     )
+    hass.services.async_register(
+        DOMAIN, SERVICE_FETCH_IMAGES, handle_fetch_images, schema=vol.Schema({})
+    )
 
-    logger.info("Desk2HA services registered: fleet_status, refresh, restart_agent")
+    logger.info("Desk2HA services registered: fleet_status, refresh, restart_agent, fetch_images")
 
 
 async def async_unload_services(hass: HomeAssistant) -> None:
     """Unload Desk2HA services when last entry is removed."""
-    for service in (SERVICE_FLEET_STATUS, SERVICE_REFRESH, SERVICE_RESTART_AGENT):
+    for service in (
+        SERVICE_FLEET_STATUS,
+        SERVICE_REFRESH,
+        SERVICE_RESTART_AGENT,
+        SERVICE_FETCH_IMAGES,
+    ):
         hass.services.async_remove(DOMAIN, service)

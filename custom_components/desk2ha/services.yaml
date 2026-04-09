@@ -25,3 +25,7 @@ restart_agent:
       example: "ST-J52KFL3"
       selector:
         text:
+
+fetch_product_images:
+  name: Fetch Product Images
+  description: Download product images from manufacturer websites for all configured desks. Images are cached locally.
