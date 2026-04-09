@@ -35,6 +35,7 @@ Brings your entire desk — PC, monitors, peripherals — into Home Assistant. W
 - **Auto-discovery**: Zeroconf finds agents on your network
 - **Remote install**: Deploy the agent on remote machines via SSH or WinRM
 - **Fleet management**: Monitor multiple desks with fleet_status, refresh, restart services
+- **Workspace blueprints**: Ready-made automations (Morning Routine, Lock on Away, Low Battery Alert, Night Shutdown)
 - **Dynamic entities**: Only creates entities for metrics your agent actually reports
 
 ## Installation
@@ -66,7 +67,7 @@ The [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) must be runni
 The agent advertises via Zeroconf. HA will discover it automatically.
 
 **Option 3: Remote install**
-In the integration setup, choose "Install agent on remote machine" and provide SSH (Linux/macOS) or WinRM (Windows) credentials. The integration installs the agent, generates a config, and starts it automatically.
+In the integration setup, choose "Install agent on remote machine". The integration scans your local network for reachable hosts (SSH, WinRM, existing agents), then installs the agent, generates a config, and starts it automatically.
 
 ## Entity Platforms
 
@@ -123,8 +124,10 @@ The card shows system gauges (CPU, RAM, disk, WiFi), thermals, battery status, a
 
 ## Upcoming Features
 
-- **Vendor battery levels**: Corsair, SteelSeries, Razer battery via HID
-- **Prometheus endpoint**: Metrics in Prometheus scrape format
+- **SteelSeries/Razer battery**: Battery levels via HID for wireless peripherals
+- **Energy Dashboard**: Desk power consumption in HA Energy Dashboard
+- **Fleet policies**: Centralized configuration and compliance rules
+- **Multi-host device tracking**: Device follows user across machines
 
 ## License
 
