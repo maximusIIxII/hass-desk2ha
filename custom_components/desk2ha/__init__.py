@@ -47,6 +47,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         raise ConfigEntryNotReady(f"Cannot reach agent: {exc}") from exc
     await coordinator.async_config_entry_first_refresh()
 
+    # Migrate: set unique_id if missing (entries created before v0.7.1)
+    if not entry.unique_id and coordinator.device_key != "unknown":
+        hass.config_entries.async_update_entry(entry, unique_id=coordinator.device_key)
+        logger.info("Migrated unique_id to %s", coordinator.device_key)
+
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
