@@ -56,10 +56,13 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
         )
 
     _SENTINEL = object()
+    _check_metric_available = True  # Subclasses can set False (buttons, commands)
 
     @property
     def available(self) -> bool:
         """Return False if the metric key is absent from the current data."""
+        if not self._check_metric_available:
+            return super().available
         if self.coordinator.data is None:
             return super().available
         # Check if the metric exists at all in the data (not just value)
