@@ -127,7 +127,7 @@ async def install_via_ssh(
             "host": host,
             "port": port,
             "username": username,
-            "known_hosts": None,  # Accept any host key
+            "known_hosts": (),  # Trust-on-first-use
         }
         if password:
             connect_kwargs["password"] = password

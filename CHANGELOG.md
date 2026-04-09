@@ -3,6 +3,16 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.8.3] - 2026-04-09
+
+### 🔒 Security
+- **SSH host key verification**: Changed from disabled (`known_hosts=None`) to trust-on-first-use — prevents MITM on remote agent install
+- **WinRM TLS validation**: Documented risk (self-signed certs still accepted for Windows remote install)
+- **Install page XSS prevention**: HTML-escape `base_url` and `token` in install page template
+- **Pairing code hardening**: CSPRNG (`secrets.choice`) replaces `random.choices`; rate limiting (10 attempts/min per IP, HTTP 429)
+- **Image cache path traversal**: `device_key` sanitized to `[a-zA-Z0-9_-]` before file path construction
+- **Install script permissions**: `chmod 600 config.toml` (Linux), `icacls` restriction (Windows)
+
 ## [0.8.2] - 2026-04-09
 
 ### 🐛 Bug fixes

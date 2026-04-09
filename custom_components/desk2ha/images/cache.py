@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -23,8 +24,14 @@ class ImageCache:
         self._dir = cache_dir
         self._dir.mkdir(parents=True, exist_ok=True)
 
+    @staticmethod
+    def _sanitize_key(device_key: str) -> str:
+        """Sanitize device_key to prevent path traversal."""
+        return re.sub(r"[^a-zA-Z0-9_-]", "_", device_key)
+
     def get(self, device_key: str) -> Path | None:
         """Return cached image path if it exists."""
+        device_key = self._sanitize_key(device_key)
         for ext in (".jpg", ".png", ".webp"):
             path = self._dir / f"{device_key}{ext}"
             if path.is_file():
@@ -38,6 +45,7 @@ class ImageCache:
         session: aiohttp.ClientSession,
     ) -> Path | None:
         """Download image from URL and store locally. Returns path or None."""
+        device_key = self._sanitize_key(device_key)
         try:
             import aiohttp as _aiohttp
 
@@ -83,6 +91,7 @@ class ImageCache:
         """Clear cached images. If device_key given, clear only that device."""
         removed = 0
         if device_key:
+            device_key = self._sanitize_key(device_key)
             for ext in (".jpg", ".png", ".webp"):
                 path = self._dir / f"{device_key}{ext}"
                 if path.is_file():
