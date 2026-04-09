@@ -11,6 +11,12 @@ Brings your entire desk — PC, monitors, peripherals — into Home Assistant. W
 
 ## Screenshots
 
+### Dashboard
+
+![Desk2HA Dashboard](docs/screenshots/dashboard.png)
+
+### Entity Views
+
 | Sensors | Controls | Diagnostics | Config |
 |---------|----------|-------------|--------|
 | ![Sensors](docs/screenshots/sensors.png) | ![Controls](docs/screenshots/controls.png) | ![Diagnostics](docs/screenshots/diagnostics.png) | ![Config](docs/screenshots/config.png) |
@@ -117,10 +123,17 @@ Add the Desk2HA card to any dashboard for a complete desk overview:
 
 ```yaml
 type: custom:desk2ha-card
-entity: sensor.desk2ha_cpu_usage
+entity: sensor.desk2ha_<device_key>_cpu_usage
+show_system: true
+show_thermals: true
+show_battery: true
+show_peripherals: true
+show_displays: true
 ```
 
 The card shows system gauges (CPU, RAM, disk, WiFi), thermals, battery status, and connected peripherals with Bluetooth battery levels. Registered automatically when the integration loads.
+
+> **Note:** You also need to add the card as a dashboard resource: **Settings** > **Dashboards** > **Resources** > Add `/desk2ha/desk2ha-card.js` as JavaScript Module.
 
 ## Upcoming Features
 
