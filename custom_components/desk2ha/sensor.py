@@ -343,6 +343,10 @@ async def async_setup_entry(
         sub_meta = sub_device_map.get(sub_key, {})
 
         defn = KNOWN_SENSORS.get(metric_key)
+        # Fallback: try without category prefix (thermals.cpu_package → cpu_package)
+        if defn is None and "." in metric_key:
+            bare_key = metric_key.split(".", 1)[1]
+            defn = KNOWN_SENSORS.get(bare_key)
         if defn:
             entities.append(
                 Desk2HASensor(
