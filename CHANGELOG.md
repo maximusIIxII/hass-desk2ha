@@ -3,7 +3,20 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
-## [Unreleased]
+## [0.5.0] - 2026-04-09
+
+### ✨ New features
+- **Custom Lovelace Card**: `desk2ha-card` with system gauges (CPU/RAM/Disk/WiFi), thermals, battery, peripherals with BT battery levels
+- **Product Images Tier 3**: opt-in vendor image fetch (Dell, Lenovo, HP, Logitech) with local cache (1MB/image, 100MB total)
+- **Bluetooth Peripheral Enrichment**: entity type, transport, and connected status for BT devices
+- **Network Host Discovery**: scan LAN for SSH/WinRM hosts during remote agent installation
+- **Workspace Blueprints**: Morning Routine, Lock on Away, Low Battery Alert, Night Shutdown
+- **`fetch_product_images` service**: download product images on demand
+- **Options Flow**: toggle for product image fetching
+
+### 🐛 Bug fixes
+- KNOWN_SENSORS prefix fallback: `thermals.fan.cpu` now matches `fan.cpu` definition (fixes "Unbekannt" fan + missing °C on thermals)
+- Removed verbose debug logging from device cleanup
 
 ## [0.4.4] - 2026-04-09
 
