@@ -125,11 +125,22 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed(f"Update install failed: {exc}") from exc
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch /v1/metrics from agent."""
+        """Fetch /v1/metrics from agent and refresh agent_info periodically."""
         session = await self._ensure_session()
         try:
             async with session.get(f"{self._url}/v1/metrics", headers=self.headers) as resp:
                 resp.raise_for_status()
-                return await resp.json()
+                data = await resp.json()
         except aiohttp.ClientError as exc:
             raise UpdateFailed(f"Cannot fetch metrics: {exc}") from exc
+
+        # Refresh agent_info if the agent reports a different version
+        reported_version = data.get("agent_version")
+        if reported_version and reported_version != self.agent_info.get("agent_version"):
+            try:
+                await self.fetch_info()
+                logger.info("Agent version updated to %s", reported_version)
+            except Exception:
+                pass  # Non-critical, will retry next cycle
+
+        return data
