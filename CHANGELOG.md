@@ -3,6 +3,11 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.6.1] - 2026-04-09
+
+### 🐛 Bug fixes
+- **CI test fix**: Added `homeassistant.exceptions` mock stub to test conftest — fixes `ConfigEntryNotReady` import error in CI
+
 ## [0.6.0] - 2026-04-09
 
 ### ✨ New features
