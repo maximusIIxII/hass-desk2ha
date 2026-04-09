@@ -64,7 +64,7 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_distribute(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Generate an install link for agent distribution."""
+        """Generate an install link and pairing code for agent distribution."""
         from .install_server import InstallServer
 
         server: InstallServer | None = self.hass.data.get(f"{DOMAIN}_install_server")
@@ -73,7 +73,7 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
 
         # Determine HA external/internal URL
         ha_url = self._get_ha_url()
-        token, _agent_token = server.create_token(ha_url)
+        token, _agent_token, pairing_code = server.create_token(ha_url)
         install_url = f"{ha_url}/{DOMAIN}/install/{token}"
 
         return self.async_show_form(
@@ -81,6 +81,7 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({}),
             description_placeholders={
                 "install_url": install_url,
+                "pairing_code": pairing_code,
             },
         )
 

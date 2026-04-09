@@ -9,7 +9,7 @@
       },
       "distribute": {
         "title": "Install Agent",
-        "description": "Open this URL on the target machine and follow the instructions:\n\n**{install_url}**\n\nThe link is single-use and expires in 1 hour. The agent will connect back automatically after installation."
+        "description": "**Option 1 — Installer (recommended):**\nDownload the installer from [desk2ha.github.io](https://github.com/maximusIIxII/desk2ha-agent/releases/latest) on the target machine, run it, and enter this pairing code:\n\n## {pairing_code}\n\n**Option 2 — Advanced (terminal):**\nOpen this URL on the target machine: {install_url}\n\nBoth options expire in 1 hour."
       },
       "manual": {
         "title": "Manual Configuration",
