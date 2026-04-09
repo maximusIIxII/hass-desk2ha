@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 _TOKEN_TTL = 3600  # 1 hour
 _MAX_PENDING = 20  # max simultaneous pending tokens
+_PAIRING_CODE_LEN = 6
 
 
 @dataclass
@@ -32,6 +33,7 @@ class _PendingInstall:
     agent_token: str
     created: float
     ha_url: str
+    pairing_code: str = ""
     expired: bool = False
 
 
@@ -57,8 +59,8 @@ class InstallServer:
     # Token management
     # ------------------------------------------------------------------
 
-    def create_token(self, ha_url: str) -> tuple[str, str]:
-        """Create a new install token.  Returns (token, agent_token)."""
+    def create_token(self, ha_url: str) -> tuple[str, str, str]:
+        """Create a new install token.  Returns (token, agent_token, pairing_code)."""
         self._purge_expired()
         if len(self._pending) >= _MAX_PENDING:
             # Remove oldest
@@ -67,12 +69,47 @@ class InstallServer:
 
         token = secrets.token_urlsafe(32)
         agent_token = secrets.token_urlsafe(32)
+        pairing_code = self._generate_pairing_code()
         self._pending[token] = _PendingInstall(
             agent_token=agent_token,
             created=time.time(),
             ha_url=ha_url,
+            pairing_code=pairing_code,
         )
-        return token, agent_token
+        return token, agent_token, pairing_code
+
+    def validate_pairing_code(self, code: str) -> _PendingInstall | None:
+        """Find a pending install by pairing code."""
+        self._purge_expired()
+        code_upper = code.strip().upper()
+        for pending in self._pending.values():
+            if pending.pairing_code == code_upper:
+                return pending
+        return None
+
+    def find_token_by_code(self, code: str) -> str | None:
+        """Find the token key for a pairing code."""
+        self._purge_expired()
+        code_upper = code.strip().upper()
+        for token, pending in self._pending.items():
+            if pending.pairing_code == code_upper:
+                return token
+        return None
+
+    def _generate_pairing_code(self) -> str:
+        """Generate a unique 6-char alphanumeric pairing code (no ambiguous chars)."""
+        import random
+        import string
+
+        # Avoid ambiguous chars: 0/O, 1/I/L
+        alphabet = string.ascii_uppercase.replace("O", "").replace("I", "").replace("L", "")
+        alphabet += string.digits.replace("0", "").replace("1", "")
+        existing = {p.pairing_code for p in self._pending.values()}
+        for _ in range(100):
+            code = "".join(random.choices(alphabet, k=_PAIRING_CODE_LEN))  # noqa: S311
+            if code not in existing:
+                return code
+        return secrets.token_hex(3).upper()[:_PAIRING_CODE_LEN]
 
     def validate_token(self, token: str) -> _PendingInstall | None:
         """Return the pending install if the token is valid and not expired."""
@@ -103,6 +140,7 @@ class InstallServer:
         app.router.add_get(f"/{DOMAIN}/install/{{token}}/script.sh", self._handle_script_sh)
         app.router.add_get(f"/{DOMAIN}/install/{{token}}/script.ps1", self._handle_script_ps1)
         app.router.add_post(f"/{DOMAIN}/install/phone-home", self._handle_phone_home)
+        app.router.add_post(f"/{DOMAIN}/install/pair", self._handle_pair)
         logger.info("Registered install server routes under /%s/install/", DOMAIN)
 
     async def _handle_install_page(self, request: web.Request) -> web.Response:
@@ -162,6 +200,57 @@ class InstallServer:
             text=script,
             content_type="text/plain",
             headers={"Content-Disposition": "inline; filename=install-desk2ha.ps1"},
+        )
+
+    async def _handle_pair(self, request: web.Request) -> web.Response:
+        """Handle pairing code from setup wizard.
+
+        The agent's setup wizard POSTs a pairing code.  We validate it,
+        return the agent_token + phone_home_token, and trigger config flow.
+        """
+        try:
+            data = await request.json()
+        except Exception:
+            return web.json_response({"error": "invalid json"}, status=400)
+
+        code = data.get("pairing_code", "").strip()
+        agent_url = data.get("agent_url", "")
+        hardware = data.get("hardware", {})
+
+        pending = self.validate_pairing_code(code)
+        if pending is None:
+            return web.json_response({"error": "Invalid pairing code"}, status=403)
+
+        token_key = self.find_token_by_code(code)
+
+        # Trigger config flow with phone_home data
+        device_key = hardware.get("hostname", "unknown")
+        self._hass.async_create_task(
+            self._hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": "phone_home"},
+                data={
+                    "agent_url": agent_url,
+                    "agent_token": pending.agent_token,
+                    "device_key": device_key,
+                    "hardware": hardware,
+                },
+            )
+        )
+
+        logger.info(
+            "Pairing successful: %s (%s)",
+            device_key,
+            agent_url,
+        )
+
+        # Return credentials so the agent can write its config
+        return web.json_response(
+            {
+                "status": "ok",
+                "agent_token": pending.agent_token,
+                "phone_home_token": token_key or "",
+            }
         )
 
     async def _handle_phone_home(self, request: web.Request) -> web.Response:
