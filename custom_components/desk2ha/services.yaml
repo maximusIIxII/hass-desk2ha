@@ -29,3 +29,22 @@ restart_agent:
 fetch_product_images:
   name: Fetch Product Images
   description: Download product images from manufacturer websites for all configured desks. Images are cached locally.
+
+wake_on_lan:
+  name: Wake on LAN
+  description: Send a Wake-on-LAN magic packet to wake a remote device.
+  fields:
+    device_key:
+      name: Device Key
+      description: Device key of the agent that should send the WoL packet.
+      required: true
+      example: "ST-EXAMPLE01"
+      selector:
+        text:
+    mac:
+      name: MAC Address
+      description: MAC address of the target device (e.g. AA:BB:CC:DD:EE:FF).
+      required: true
+      example: "AA:BB:CC:DD:EE:FF"
+      selector:
+        text:

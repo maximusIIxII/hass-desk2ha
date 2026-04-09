@@ -50,11 +50,19 @@ BINARY_SENSOR_DEFS: list[BinarySensorDef] = [
         icon="mdi:power-plug",
         is_on_fn=_battery_is_on_ac,
     ),
+    BinarySensorDef(
+        name="Lid Open",
+        metric_key="system.lid_open",
+        device_class=BinarySensorDeviceClass.OPENING,
+        icon="mdi:laptop",
+        is_on_fn=lambda v: bool(v) if v is not None else None,
+    ),
 ]
 
 # Map metric_key -> required data key to check existence
 _EXISTENCE_CHECKS: dict[str, str] = {
     "battery.state": "battery",
+    "system.lid_open": "system",
 }
 
 

@@ -18,6 +18,7 @@ SERVICE_FLEET_STATUS = "fleet_status"
 SERVICE_REFRESH = "refresh"
 SERVICE_RESTART_AGENT = "restart_agent"
 SERVICE_FETCH_IMAGES = "fetch_product_images"
+SERVICE_WAKE_ON_LAN = "wake_on_lan"
 
 FLEET_STATUS_SCHEMA = vol.Schema({})
 REFRESH_SCHEMA = vol.Schema(
@@ -28,6 +29,12 @@ REFRESH_SCHEMA = vol.Schema(
 RESTART_SCHEMA = vol.Schema(
     {
         vol.Required("device_key"): str,
+    }
+)
+WOL_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_key"): str,
+        vol.Required("mac"): str,
     }
 )
 
@@ -173,11 +180,51 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN, SERVICE_RESTART_AGENT, handle_restart_agent, schema=RESTART_SCHEMA
     )
+
+    async def handle_wake_on_lan(call: ServiceCall) -> None:
+        """Send Wake-on-LAN magic packet via a specific agent."""
+        import aiohttp
+
+        device_key = call.data["device_key"]
+        mac = call.data["mac"]
+        coordinators = _get_coordinators(hass)
+        coordinator = coordinators.get(device_key)
+
+        if coordinator is None:
+            logger.warning("Desk %s not found for WoL", device_key)
+            return
+
+        url = coordinator.agent_url
+        token = coordinator.agent_token
+
+        try:
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            async with (
+                aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session,
+                session.post(
+                    f"{url}/v1/commands",
+                    json={
+                        "command": "remote.wake_on_lan",
+                        "parameters": {"mac": mac},
+                    },
+                    headers=headers,
+                ) as resp,
+            ):
+                result = await resp.json()
+                logger.info("WoL via %s to %s: %s", device_key, mac, result)
+        except Exception:
+            logger.exception("WoL failed via %s", device_key)
+
     hass.services.async_register(
         DOMAIN, SERVICE_FETCH_IMAGES, handle_fetch_images, schema=vol.Schema({})
     )
+    hass.services.async_register(
+        DOMAIN, SERVICE_WAKE_ON_LAN, handle_wake_on_lan, schema=WOL_SCHEMA
+    )
 
-    logger.info("Desk2HA services registered: fleet_status, refresh, restart_agent, fetch_images")
+    logger.info(
+        "Desk2HA services registered: fleet_status, refresh, restart_agent, fetch_images, wol"
+    )
 
 
 async def async_unload_services(hass: HomeAssistant) -> None:
@@ -187,5 +234,6 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_REFRESH,
         SERVICE_RESTART_AGENT,
         SERVICE_FETCH_IMAGES,
+        SERVICE_WAKE_ON_LAN,
     ):
         hass.services.async_remove(DOMAIN, service)

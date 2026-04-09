@@ -128,6 +128,23 @@ async def async_setup_entry(
             )
         )
 
+    # Battery charge mode (Lenovo conservation/normal/express)
+    battery_data = data.get("battery", {})
+    charge_mode = battery_data.get("charge_mode") or _find_flat(data, "battery.charge_mode")
+    if charge_mode is not None:
+        entities.append(
+            Desk2HASelect(
+                coordinator=coordinator,
+                metric_key="battery.charge_mode",
+                name="Battery Charge Mode",
+                command="battery.set_charge_mode",
+                target="",
+                param_key="mode",
+                options=["conservation", "normal", "express"],
+                icon="mdi:battery-heart",
+            )
+        )
+
     async_add_entities(entities)
 
 
