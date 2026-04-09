@@ -139,3 +139,31 @@ class Desk2HASubDeviceEntity(Desk2HAEntity):
             model=self._sub_model,
             via_device=(DOMAIN, self.coordinator.device_key),
         )
+
+    @property
+    def available(self) -> bool:
+        """Return False if the peripheral reports connected=false."""
+        if not self._sub_device_id or self.coordinator.data is None:
+            return super().available
+
+        # Find the peripheral entry in coordinator data
+        peripherals = self.coordinator.data.get("peripherals", [])
+        for peripheral in peripherals:
+            if not isinstance(peripheral, dict):
+                continue
+            dev_id = peripheral.get("id", "")
+            expected_suffix = f"_{dev_id}"
+            if self._sub_device_id.endswith(expected_suffix):
+                connected_raw = peripheral.get("connected")
+                if connected_raw is None:
+                    break
+                # Handle both dict-wrapped {"value": ...} and plain values
+                if isinstance(connected_raw, dict) and "value" in connected_raw:
+                    connected_val = connected_raw["value"]
+                else:
+                    connected_val = connected_raw
+                if connected_val is False or str(connected_val).lower() == "false":
+                    return False
+                break
+
+        return super().available

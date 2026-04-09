@@ -32,6 +32,23 @@ _ORPHANED_DEVICE_NAMES = {
     "usb input device",
     "usb composite device",
     "logitech",  # bare "Logitech" with no model
+    "usb-massenspeichergerät",
+    "usb-massenspeichergerat",
+    "usb mass storage device",
+    "kompatibles usb-speichergerät",
+    "universal receiver",  # suppressed on agent side since v0.8.0
+}
+
+# Manufacturer names that are actually Windows driver class names, not real manufacturers.
+_DRIVER_CLASS_MANUFACTURERS = {
+    "winusb-gerät",
+    "winusb-gerat",
+    "winusb device",
+    "kompatibles usb-speichergerät",
+    "kompatibles usb-speichergerat",
+    "compatible usb storage device",
+    "(standardsystemgeräte)",
+    "(standard system devices)",
 }
 
 
@@ -153,6 +170,12 @@ def _cleanup_orphaned_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
         # 1. Remove devices with generic/orphaned names
         if name in _ORPHANED_DEVICE_NAMES:
+            _remove_device(device)
+            continue
+
+        # 1b. Remove devices whose manufacturer is a Windows driver class name
+        mfg_lower = (device.manufacturer or "").lower().strip()
+        if mfg_lower in _DRIVER_CLASS_MANUFACTURERS:
             _remove_device(device)
             continue
 
