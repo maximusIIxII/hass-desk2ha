@@ -5,7 +5,48 @@ on:
     tags: ["v*"]
 
 jobs:
+  version-check:
+    name: Version consistency
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify tag matches manifest.json
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          MANIFEST_VERSION=$(python -c "import json; print(json.load(open('custom_components/desk2ha/manifest.json'))['version'])")
+          echo "Tag version:      $TAG_VERSION"
+          echo "Manifest version: $MANIFEST_VERSION"
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "::error::Tag v$TAG_VERSION does not match manifest.json version $MANIFEST_VERSION"
+            exit 1
+          fi
+
+      - name: Verify CHANGELOG has entry for this version
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          if ! grep -q "\[${TAG_VERSION}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no entry for version $TAG_VERSION"
+            exit 1
+          fi
+
+      - name: Check latest agent version on PyPI
+        run: |
+          AGENT_VERSION=$(pip index versions desk2ha-agent 2>/dev/null | head -1 | grep -oP '\([\d.]+\)' | tr -d '()') || true
+          if [ -z "$AGENT_VERSION" ]; then
+            echo "::warning::Could not fetch agent version from PyPI (package may not exist yet)"
+          else
+            echo "Latest agent version on PyPI: $AGENT_VERSION"
+            echo "AGENT_VERSION=$AGENT_VERSION" >> "$GITHUB_OUTPUT"
+          fi
+
   release:
+    needs: version-check
     runs-on: ubuntu-latest
     permissions:
       contents: write
