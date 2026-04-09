@@ -100,14 +100,7 @@ def _cleanup_orphaned_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
     def _remove_device(device: Any) -> None:
         entities = er.async_entries_for_device(ent_registry, device.id)
-        logger.info(
-            "Cleanup: removing device '%s' (id=%s, %d entities)",
-            device.name,
-            device.id,
-            len(entities),
-        )
         for entity in entities:
-            logger.debug("Cleanup: removing entity %s", entity.entity_id)
             ent_registry.async_remove(entity.entity_id)
         try:
             dev_registry.async_remove_device(device.id)
@@ -151,14 +144,6 @@ def _cleanup_orphaned_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
         if name in seen_names:
             prev_device, prev_count = seen_names[name]
-            logger.info(
-                "Cleanup: dedup match '%s' — '%s' (%d) vs '%s' (%d)",
-                name,
-                device.name,
-                entity_count,
-                prev_device.name,
-                prev_count,
-            )
             # Keep the one with more entities
             if entity_count > prev_count:
                 _remove_device(prev_device)
