@@ -27,32 +27,33 @@ Brings your entire desk — PC, monitors, peripherals — into Home Assistant. W
 
 ## What you get
 
-- **80+ sensors**: CPU, RAM, disk, battery, GPU, thermals, fan speeds, network, OS info
-- **Display controls**: Brightness, contrast, volume, input source, KVM switch, PBP mode
-- **Webcam controls**: Brightness, contrast, saturation, white balance, focus, zoom via UVC
+- **100+ sensors**: CPU, RAM, disk, battery, GPU, thermals, fan speeds, network throughput, WiFi SSID/signal, OS info, uptime, process count
+- **Display controls**: Brightness, volume, input source, power state via DDC/CI (per display)
 - **Logitech Litra**: Power, brightness, color temperature as HA light entity
-- **Bluetooth peripherals**: Paired BLE + Classic devices with battery levels (keyboard, mouse, headset, earbuds)
-- **Peripheral detection**: USB devices, wireless receivers (Dell, Logitech, Jabra, Corsair, SteelSeries, Razer)
+- **Bluetooth peripherals**: Paired BLE + Classic devices with battery levels and connection status
+- **Peripheral detection**: USB devices with VID:PID identification (Dell, Logitech, Jabra, Corsair, SteelSeries, Razer)
 - **Product images**: Opt-in fetch of real product photos from Dell, Lenovo, HP, Logitech websites
-- **Power monitoring**: USB PD charger status, AC adapter wattage, Dell DCM thermals
-- **Sub-devices**: Each display, peripheral, and receiver appears as its own HA device
+- **Power monitoring**: USB PD charger status, AC adapter wattage, battery charge mode (Lenovo)
+- **Sub-devices**: Each display, peripheral, and receiver appears as its own HA device (via_device)
 - **Custom Lovelace card**: Dedicated dashboard card with system gauges, thermals, peripherals overview
-- **Agent updates**: See available updates + install from HA
-- **Auto-discovery**: Zeroconf finds agents on your network
-- **Remote install**: Deploy the agent on remote machines via SSH or WinRM
+- **Agent updates**: See available updates + install directly from HA
+- **Auto-discovery**: Zeroconf finds agents on your network automatically
+- **Agent distribution**: Generate install URL + pairing code, deploy agent from HA config flow
+- **Remote install**: Deploy the agent on remote machines via SSH (Linux/macOS) or WinRM (Windows)
 - **Fleet management**: Monitor multiple desks with fleet_status, refresh, restart services
 - **Workspace blueprints**: Ready-made automations (Morning Routine, Lock on Away, Low Battery Alert, Night Shutdown)
 - **Dynamic entities**: Only creates entities for metrics your agent actually reports
+- **Security hardened**: SSH TOFU, XSS prevention, pairing rate limiting, input validation, path traversal protection
 
 ## Installation
 
 ### HACS (recommended)
 
-1. **HACS** → Integrations → ⋮ → **Custom Repositories**
+1. **HACS** > Integrations > ⋮ > **Custom Repositories**
 2. URL: `https://github.com/maximusIIxII/hass-desk2ha`
 3. Category: **Integration**
 4. Install **Desk2HA** and restart HA
-5. **Settings** → **Integrations** → **Add Integration** → **Desk2HA**
+5. **Settings** > **Integrations** > **Add Integration** > **Desk2HA**
 
 ### Manual
 
@@ -70,20 +71,23 @@ The [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) must be runni
    - **Token**: The auth token from your agent config
 
 **Option 2: Auto-discovery**
-The agent advertises via Zeroconf. HA will discover it automatically.
+The agent advertises via Zeroconf (`_desk2ha._tcp.local.`). HA will discover it automatically.
 
-**Option 3: Remote install**
-In the integration setup, choose "Install agent on remote machine". The integration scans your local network for reachable hosts (SSH, WinRM, existing agents), then installs the agent, generates a config, and starts it automatically.
+**Option 3: Agent distribution (Phone Home)**
+In the integration setup, choose "Distribute agent". HA generates an install URL with a 6-character pairing code. Open the URL on the target machine — the agent installs and connects back to HA automatically.
+
+**Option 4: Remote install**
+Choose "Install agent on remote machine". The integration scans your LAN for reachable hosts (SSH, WinRM, existing agents), then deploys the agent, generates a config, and starts it automatically.
 
 ## Entity Platforms
 
 | Platform | Examples |
 |----------|---------|
-| **Sensor** | CPU Usage, RAM, Battery Level, GPU Model, Fan Speed, Display Model, WiFi RSSI |
-| **Binary Sensor** | On AC Power |
-| **Number** | Display Brightness, Contrast, Volume (per display) |
-| **Select** | Display Input Source, Power State, KVM Switch, PBP Mode, Thermal Profile |
-| **Switch** | Auto Brightness, Auto Color Temperature |
+| **Sensor** | CPU Usage, RAM, Battery Level, GPU Model, Fan Speed, WiFi SSID, Network Throughput |
+| **Binary Sensor** | Lid Open, On AC Power |
+| **Number** | Display Brightness, Volume, Keyboard Backlight, Mouse DPI |
+| **Select** | Display Input Source, Power State, Thermal Profile, Battery Charge Mode |
+| **Switch** | Auto Brightness, Auto Color Temperature, BLE Scanning |
 | **Light** | Display Brightness (dimmable), Logitech Litra (brightness + color temp) |
 | **Media Player** | Display Speaker Volume |
 | **Button** | Refresh Data, Restart Agent, Lock Screen, Sleep, Shutdown |
@@ -96,6 +100,7 @@ In the integration setup, choose "Install agent on remote machine". The integrat
 | `desk2ha.fleet_status` | Get status of all configured desks (online/offline, versions, collectors) |
 | `desk2ha.refresh` | Force-refresh metrics from one or all desks |
 | `desk2ha.restart_agent` | Send restart command to a specific agent |
+| `desk2ha.wake_on_lan` | Send Wake-on-LAN magic packet via agent |
 | `desk2ha.fetch_product_images` | Download product images from manufacturer websites for all desks |
 
 ## Options
@@ -103,19 +108,6 @@ In the integration setup, choose "Install agent on remote machine". The integrat
 In the integration options you can configure:
 - **Poll interval**: How often to fetch metrics (default: 30s, min: 10s)
 - **Fetch product images**: Download product photos from manufacturer websites (opt-in)
-
-## Requirements
-
-- Home Assistant 2024.12.0+
-- [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) running on the target machine
-- Network connectivity between HA and the agent (HTTP port 9693 or MQTT)
-
-## Known Issues
-
-| Issue | Workaround | Status |
-|-------|------------|--------|
-| **Display entities show "not available"** | Display controls require the agent to run interactively (not as service) for DDC/CI access. | By design |
-| **MQTT entities duplicate HTTP entities** | If both HTTP polling and MQTT are active, the same metrics appear twice. Use one transport or the other, not both. | Planned fix |
 
 ## Custom Lovelace Card
 
@@ -133,14 +125,29 @@ show_displays: true
 
 The card shows system gauges (CPU, RAM, disk, WiFi), thermals, battery status, and connected peripherals with Bluetooth battery levels. Registered automatically when the integration loads.
 
-> **Note:** You also need to add the card as a dashboard resource: **Settings** > **Dashboards** > **Resources** > Add `/desk2ha/desk2ha-card.js` as JavaScript Module.
+> **Note:** Add the card as a dashboard resource: **Settings** > **Dashboards** > **Resources** > Add `/desk2ha/desk2ha-card.js` as JavaScript Module.
+
+## Known Issues
+
+| Issue | Workaround | Status |
+|-------|------------|--------|
+| **DDC/CI requires interactive session** | Display controls (brightness, volume, input) only work when the agent runs interactively, not as a Windows Service (Session 0 limitation). | By design |
+| **Lovelace card not found** | The card JS is served via HA HTTP, but must also be added as a dashboard resource manually (see above). | Documented |
+| **WinRM uses self-signed TLS** | Remote install on Windows accepts self-signed certificates. Use SSH where possible. | Documented |
+
+## Requirements
+
+- Home Assistant 2024.12.0+
+- [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) running on the target machine
+- Network connectivity between HA and the agent (HTTP port 9693)
 
 ## Upcoming Features
 
-- **SteelSeries/Razer battery**: Battery levels via HID for wireless peripherals
-- **Energy Dashboard**: Desk power consumption in HA Energy Dashboard
-- **Fleet policies**: Centralized configuration and compliance rules
+- **USB PD Dock Monitoring**: Thunderbolt/USB4-specific metrics for docking stations
 - **Multi-host device tracking**: Device follows user across machines
+- **Fleet management policies**: Centralized configuration and compliance rules
+- **Energy Dashboard**: Desk power consumption in HA Energy Dashboard
+- **HACS Default Repository**: Approval for HACS default store
 
 ## License
 
