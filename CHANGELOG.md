@@ -3,6 +3,11 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.8.1] - 2026-04-09
+
+### 🐛 Bug fixes
+- **Entity ID migration**: Old index-based USB/receiver entities (`peripheral_usb_0_*`, `peripheral_receiver_0_*`) auto-cleaned on startup — fixes entity name mismatches after v0.8.0 device reordering
+
 ## [0.8.0] - 2026-04-09
 
 ### ✨ New features

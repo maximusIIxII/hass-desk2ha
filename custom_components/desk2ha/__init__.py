@@ -128,9 +128,17 @@ async def _register_card(hass: HomeAssistant) -> None:
 
 def _cleanup_orphaned_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Remove entity registry entries that belong to removed/renamed definitions."""
+    import re
+
     registry = er.async_get(hass)
     entities = er.async_entries_for_config_entry(registry, entry.entry_id)
     removed = 0
+
+    # Pattern for old index-based USB peripheral IDs (e.g. peripheral_usb_0_model)
+    # These were replaced by VID:PID-based IDs in v0.8.1 (peripheral_usb_413c_c015_model)
+    _OLD_USB_INDEX_PATTERN = re.compile(r"peripheral_usb_\d+_")
+    # Pattern for old receiver IDs (suppressed in v0.8.0)
+    _OLD_RECEIVER_PATTERN = re.compile(r"peripheral_receiver_\d+_")
 
     for entity in entities:
         if not entity.unique_id:
@@ -141,6 +149,12 @@ def _cleanup_orphaned_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
                 registry.async_remove(entity.entity_id)
                 removed += 1
                 break
+        else:
+            # Remove old index-based USB and receiver entities
+            uid = entity.unique_id
+            if _OLD_USB_INDEX_PATTERN.search(uid) or _OLD_RECEIVER_PATTERN.search(uid):
+                registry.async_remove(entity.entity_id)
+                removed += 1
 
     if removed:
         logger.info("Removed %d orphaned entity registry entries", removed)
