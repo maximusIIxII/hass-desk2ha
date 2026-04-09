@@ -85,6 +85,24 @@ async def async_setup_entry(
                 )
             )
 
+    # BLE Scanning switch (system-level, not per-display)
+    data = coordinator.data or {}
+    system = data.get("system", {})
+    ble_scanning = system.get("ble_scanning")
+    if ble_scanning is not None:
+        entities.append(
+            Desk2HASwitch(
+                coordinator=coordinator,
+                metric_key="system.ble_scanning",
+                name="BLE Scanning",
+                command_on="ble.set_scanning",
+                command_off="ble.set_scanning",
+                target="",
+                param_key="enabled",
+                icon="mdi:bluetooth-settings",
+            )
+        )
+
     async_add_entities(entities)
 
 
@@ -122,7 +140,7 @@ class Desk2HASwitch(Desk2HASubDeviceEntity, SwitchEntity):
         await self.coordinator.async_send_command(
             self._command_on,
             target=self._target,
-            parameters={self._param_key: 1},
+            parameters={self._param_key: True},
         )
         await self.coordinator.async_request_refresh()
 
@@ -130,6 +148,6 @@ class Desk2HASwitch(Desk2HASubDeviceEntity, SwitchEntity):
         await self.coordinator.async_send_command(
             self._command_off,
             target=self._target,
-            parameters={self._param_key: 0},
+            parameters={self._param_key: False},
         )
         await self.coordinator.async_request_refresh()

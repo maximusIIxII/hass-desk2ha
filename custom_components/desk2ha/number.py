@@ -124,8 +124,85 @@ async def async_setup_entry(
                 )
             )
 
+    # Keyboard backlight (system-level)
+    data = coordinator.data or {}
+    system = data.get("system", {})
+    kbd_bl = system.get("keyboard_backlight")
+    if kbd_bl is not None:
+        entities.append(
+            Desk2HANumber(
+                coordinator=coordinator,
+                metric_key="system.keyboard_backlight",
+                name="Keyboard Backlight",
+                command="keyboard.set_backlight",
+                target="",
+                param_key="value",
+                min_value=0,
+                max_value=100,
+                step=1,
+                unit="%",
+                icon="mdi:keyboard-settings",
+            )
+        )
+
+    # HID++ peripheral DPI controls
+    from .helpers import extract_peripherals, peripheral_metadata
+
+    for peripheral in extract_peripherals(data):
+        dev_id = peripheral.get("id", "")
+        if not dev_id.startswith("peripheral.hidpp_"):
+            continue
+
+        meta = peripheral_metadata(peripheral, coordinator.device_key)
+        if not meta:
+            continue
+
+        # DPI slider (mice)
+        if "dpi" in peripheral:
+            entities.append(
+                Desk2HANumber(
+                    coordinator=coordinator,
+                    metric_key=f"{dev_id}.dpi",
+                    name="DPI",
+                    command="peripheral.set_dpi",
+                    target=dev_id,
+                    param_key="value",
+                    min_value=200,
+                    max_value=25600,
+                    step=100,
+                    unit="DPI",
+                    icon="mdi:mouse",
+                    sub_device_id=meta.get("sub_device_id", ""),
+                    sub_device_name=meta.get("sub_device_name", ""),
+                    sub_manufacturer=meta.get("sub_manufacturer"),
+                    sub_model=meta.get("sub_model"),
+                )
+            )
+
+        # Backlight slider (keyboards)
+        if "backlight_level" in peripheral:
+            entities.append(
+                Desk2HANumber(
+                    coordinator=coordinator,
+                    metric_key=f"{dev_id}.backlight_level",
+                    name="Backlight",
+                    command="peripheral.set_backlight",
+                    target=dev_id,
+                    param_key="value",
+                    min_value=0,
+                    max_value=100,
+                    step=1,
+                    unit="%",
+                    icon="mdi:keyboard-settings",
+                    sub_device_id=meta.get("sub_device_id", ""),
+                    sub_device_name=meta.get("sub_device_name", ""),
+                    sub_manufacturer=meta.get("sub_manufacturer"),
+                    sub_model=meta.get("sub_model"),
+                )
+            )
+
     async_add_entities(entities)
-    logger.info("Created %d number entities for %d display(s)", len(entities), len(displays))
+    logger.info("Created %d number entities", len(entities))
 
 
 class Desk2HANumber(Desk2HASubDeviceEntity, NumberEntity):

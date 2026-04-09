@@ -191,6 +191,7 @@ KNOWN_SENSORS: dict[str, SensorDef] = {
         "mdi:wifi",
     ),
     "network.wifi_ssid": SensorDef("WiFi SSID", icon="mdi:wifi"),
+    # Network throughput (per-interface, auto-discovered via suffix enrichment below)
     # Agent
     "agent.version": SensorDef("Agent Version", icon="mdi:information", diagnostic=True),
     "agent.uptime": SensorDef(
@@ -238,6 +239,29 @@ _SUFFIX_ENRICHMENT: dict[str, dict[str, Any]] = {
     "autofocus": {"icon": "mdi:camera-enhance"},
     "auto_wb": {"icon": "mdi:white-balance-auto"},
     "resolution": {"icon": "mdi:monitor", "diagnostic": True},
+    # Network throughput
+    "speed_mbps": {"icon": "mdi:speedometer", "unit": "Mbps", "state_class": "measurement"},
+    "tx_bytes_per_sec": {
+        "icon": "mdi:upload-network",
+        "unit": "B/s",
+        "state_class": "measurement",
+        "device_class": SensorDeviceClass.DATA_RATE,
+    },
+    "rx_bytes_per_sec": {
+        "icon": "mdi:download-network",
+        "unit": "B/s",
+        "state_class": "measurement",
+        "device_class": SensorDeviceClass.DATA_RATE,
+    },
+    # HID++ peripherals
+    "dpi": {"icon": "mdi:mouse", "unit": "DPI", "state_class": "measurement"},
+    "backlight_level": {
+        "icon": "mdi:keyboard-settings",
+        "unit": "%",
+        "state_class": "measurement",
+    },
+    "battery_state": {"icon": "mdi:battery-charging"},
+    "device_type": {"icon": "mdi:devices", "diagnostic": True},
 }
 
 # Metric keys to skip as sensors (handled by other platforms)

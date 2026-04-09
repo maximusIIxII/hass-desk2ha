@@ -3,6 +3,22 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.6.0] - 2026-04-09
+
+### ✨ New features
+- **Network Throughput Sensors**: Per-interface TX/RX bytes/s with DATA_RATE device class
+- **Wake-on-LAN Service**: `desk2ha.wake_on_lan` sends magic packet via agent
+- **Lid Open Binary Sensor**: Laptop lid state as opening binary sensor
+- **Battery Charge Mode Select**: Lenovo conservation/normal/express mode selector
+- **BLE Scanning Switch**: Enable/disable BLE battery scanning at runtime
+- **Keyboard Backlight Number**: Slider control for keyboard backlight (0-100%)
+- **HID++ Peripheral Sensors**: Battery, DPI, backlight, device type for Logitech wireless devices
+- **HID++ DPI/Backlight Numbers**: Slider controls for mouse DPI (200-25600) and keyboard backlight
+
+### 🔧 Improvements
+- Suffix enrichment extended: `tx_bytes_per_sec`, `rx_bytes_per_sec`, `dpi`, `backlight_level`, `battery_state`, `device_type`
+- Switch entity `turn_on`/`turn_off` uses `True`/`False` params instead of `1`/`0`
+
 ## [0.5.1] - 2026-04-09
 
 ### 🐛 Bug fixes
