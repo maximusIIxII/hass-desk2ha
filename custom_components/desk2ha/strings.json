@@ -7,6 +7,10 @@
           "method": "How would you like to add a device?"
         }
       },
+      "distribute": {
+        "title": "Install Agent",
+        "description": "Open this URL on the target machine and follow the instructions:\n\n**{install_url}**\n\nThe link is single-use and expires in 1 hour. The agent will connect back automatically after installation."
+      },
       "manual": {
         "title": "Manual Configuration",
         "description": "Enter the URL and optional Bearer token for the Desk2HA agent.",
@@ -71,7 +75,8 @@
     "abort": {
       "already_configured": "This device is already configured.",
       "cannot_connect": "Cannot connect to the discovered agent.",
-      "install_failed": "Remote installation failed."
+      "install_failed": "Remote installation failed.",
+      "install_server_unavailable": "Install server not ready. Please reload the integration first."
     }
   },
   "options": {

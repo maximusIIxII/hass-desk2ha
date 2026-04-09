@@ -42,21 +42,103 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_manual()
             if method == "install_agent":
                 return await self.async_step_install_scan()
+            if method == "distribute_agent":
+                return await self.async_step_distribute()
             return await self.async_step_manual()
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required("method", default="manual_url"): vol.In(
+                    vol.Required("method", default="distribute_agent"): vol.In(
                         {
+                            "distribute_agent": "Distribute agent (install link)",
                             "manual_url": "Enter agent URL manually",
-                            "install_agent": "Install agent on remote machine",
+                            "install_agent": "Install agent on remote machine (SSH/WinRM)",
                         }
                     ),
                 }
             ),
         )
+
+    async def async_step_distribute(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Generate an install link for agent distribution."""
+        from .install_server import InstallServer
+
+        server: InstallServer | None = self.hass.data.get(f"{DOMAIN}_install_server")
+        if server is None:
+            return self.async_abort(reason="install_server_unavailable")
+
+        # Determine HA external/internal URL
+        ha_url = self._get_ha_url()
+        token, _agent_token = server.create_token(ha_url)
+        install_url = f"{ha_url}/{DOMAIN}/install/{token}"
+
+        return self.async_show_form(
+            step_id="distribute",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "install_url": install_url,
+            },
+        )
+
+    def _get_ha_url(self) -> str:
+        """Get the best HA URL for agent communication."""
+        try:
+            from homeassistant.helpers.network import get_url
+
+            return get_url(self.hass, prefer_external=False)
+        except Exception:
+            return f"http://{self.hass.config.api.host}:{self.hass.config.api.port}"
+
+    async def async_step_phone_home(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Auto-setup after agent phone-home."""
+        if user_input is None:
+            return self.async_abort(reason="cannot_connect")
+
+        url = user_input.get("agent_url", "")
+        token = user_input.get("agent_token", "")
+        device_key = user_input.get("device_key", "unknown")
+        hardware = user_input.get("hardware", {})
+
+        try:
+            info = await self._fetch_agent_info(url, token)
+            device_key = info.get("device_key", device_key)
+            hw = info.get("hardware", hardware)
+
+            await self.async_set_unique_id(device_key)
+            self._abort_if_unique_id_configured()
+
+            title = f"{hw.get('manufacturer', 'Desk2HA')} {hw.get('model', device_key)}"
+            return self.async_create_entry(
+                title=title,
+                data={
+                    CONF_AGENT_URL: url,
+                    CONF_AGENT_TOKEN: token,
+                    CONF_DEVICE_KEY: device_key,
+                    CONF_TRANSPORT: "http",
+                },
+            )
+        except Exception:
+            # Agent might not be fully ready yet — create entry with phone-home data
+            mfg = hardware.get("manufacturer", "Desk2HA")
+            model = hardware.get("model", device_key)
+            title = f"{mfg} {model}"
+            await self.async_set_unique_id(device_key)
+            self._abort_if_unique_id_configured()
+            return self.async_create_entry(
+                title=title,
+                data={
+                    CONF_AGENT_URL: url,
+                    CONF_AGENT_TOKEN: token,
+                    CONF_DEVICE_KEY: device_key,
+                    CONF_TRANSPORT: "http",
+                },
+            )
 
     async def async_step_install_scan(
         self, user_input: dict[str, Any] | None = None
