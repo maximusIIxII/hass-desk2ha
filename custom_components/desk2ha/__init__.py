@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -14,6 +15,9 @@ from .const import DOMAIN, PLATFORMS
 from .coordinator import Desk2HACoordinator
 
 logger = logging.getLogger(__name__)
+
+CARD_JS = Path(__file__).parent / "card" / "desk2ha-card.js"
+CARD_URL_PATH = f"/{DOMAIN}/desk2ha-card.js"
 
 # unique_id patterns from v0.1.0-S1 that no longer match active entities.
 _ORPHANED_UNIQUE_IDS = {
@@ -41,11 +45,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    # Register services (only once, on first entry)
+    # Register services and card (only once, on first entry)
     if len(hass.data[DOMAIN]) == 1:
         from .services import async_setup_services
 
         await async_setup_services(hass)
+        _register_card(hass)
 
     # Clean up orphaned entities and devices from previous versions
     _cleanup_orphaned_entities(hass, entry)
@@ -69,6 +74,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await async_unload_services(hass)
 
     return unload_ok
+
+
+def _register_card(hass: HomeAssistant) -> None:
+    """Serve the Lovelace card JS file via HA's HTTP server."""
+    if CARD_JS.is_file():
+        hass.http.register_static_path(CARD_URL_PATH, str(CARD_JS), cache_headers=False)
+        logger.info("Registered Lovelace card at %s", CARD_URL_PATH)
 
 
 def _cleanup_orphaned_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
