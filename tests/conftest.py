@@ -20,6 +20,10 @@ class _CoordinatorEntity:
     def __class_getitem__(cls, item):
         return cls
 
+    @property
+    def available(self) -> bool:
+        return True
+
 
 class _DataUpdateCoordinator:
     def __class_getitem__(cls, item):
