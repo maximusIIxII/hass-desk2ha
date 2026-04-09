@@ -3,6 +3,11 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.8.5] - 2026-04-09
+
+### 🐛 Bug fixes
+- **Buttons/controls disabled**: `available` check incorrectly applied to command entities (buttons, update) that don't have metric data — added `_check_metric_available = False` for action-only entities
+
 ## [0.8.4] - 2026-04-09
 
 ### 🐛 Bug fixes

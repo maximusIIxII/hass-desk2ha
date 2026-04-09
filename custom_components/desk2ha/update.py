@@ -38,6 +38,7 @@ async def async_setup_entry(
 class Desk2HAUpdateEntity(Desk2HAEntity, UpdateEntity):
     """Represents an agent update check."""
 
+    _check_metric_available = False
     _attr_device_class = UpdateDeviceClass.FIRMWARE
     _attr_supported_features = UpdateEntityFeature.INSTALL | UpdateEntityFeature.RELEASE_NOTES
 

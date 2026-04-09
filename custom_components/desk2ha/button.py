@@ -44,6 +44,7 @@ async def async_setup_entry(
 class Desk2HARefreshButton(Desk2HAEntity, ButtonEntity):
     """Button to force a data refresh."""
 
+    _check_metric_available = False
     _attr_icon = "mdi:refresh"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -57,6 +58,7 @@ class Desk2HARefreshButton(Desk2HAEntity, ButtonEntity):
 class Desk2HARestartButton(Desk2HAEntity, ButtonEntity):
     """Button to restart the agent."""
 
+    _check_metric_available = False
     _attr_icon = "mdi:restart"
     _attr_device_class = ButtonDeviceClass.RESTART
     _attr_entity_category = EntityCategory.CONFIG
@@ -70,6 +72,8 @@ class Desk2HARestartButton(Desk2HAEntity, ButtonEntity):
 
 class Desk2HACommandButton(Desk2HAEntity, ButtonEntity):
     """Generic button that sends a command to the agent."""
+
+    _check_metric_available = False
 
     def __init__(
         self,
