@@ -3,13 +3,10 @@
   "name": "Desk2HA",
   "codeowners": ["@maximusIIxII"],
   "config_flow": true,
-  "dependencies": [],
   "documentation": "https://github.com/maximusIIxII/hass-desk2ha",
   "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/maximusIIxII/hass-desk2ha/issues",
-  "requirements": [],
-  "ssdp": [],
   "version": "0.5.0",
   "zeroconf": ["_desk2ha._tcp.local."]
 }
