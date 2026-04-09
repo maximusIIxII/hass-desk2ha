@@ -72,7 +72,8 @@
       "init": {
         "title": "Desk2HA Options",
         "data": {
-          "poll_interval": "Poll Interval (seconds)"
+          "poll_interval": "Poll Interval (seconds)",
+          "fetch_product_images": "Fetch product images from manufacturer websites"
         }
       }
     }
