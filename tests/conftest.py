@@ -30,6 +30,10 @@ class _UpdateFailed(Exception):
     pass
 
 
+class _ConfigEntryNotReady(Exception):
+    pass
+
+
 class _DeviceInfo(dict):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -52,6 +56,7 @@ _HA_MODULES = [
     "homeassistant.config_entries",
     "homeassistant.const",
     "homeassistant.core",
+    "homeassistant.exceptions",
     "homeassistant.helpers",
     "homeassistant.helpers.aiohttp_client",
     "homeassistant.helpers.device_registry",
@@ -65,6 +70,10 @@ for mod_name in _HA_MODULES:
     sys.modules[mod_name] = MagicMock()
 
 # --- Patch specific attributes to real types ---
+
+# exceptions
+exc = sys.modules["homeassistant.exceptions"]
+exc.ConfigEntryNotReady = _ConfigEntryNotReady
 
 # update_coordinator
 uc = sys.modules["homeassistant.helpers.update_coordinator"]
