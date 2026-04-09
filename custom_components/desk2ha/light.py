@@ -54,8 +54,6 @@ async def async_setup_entry(
         dev_id = peripheral.get("id", "")
         if not dev_id.startswith("peripheral.litra_"):
             continue
-        if "brightness_percent" not in peripheral and "brightness_lumen" not in peripheral:
-            continue
 
         meta = peripheral_metadata(peripheral, coordinator.device_key)
         if not meta:
