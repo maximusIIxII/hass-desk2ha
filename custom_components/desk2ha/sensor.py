@@ -270,6 +270,8 @@ _SKIP_KEYS = {
     "agent_version",
     "device_key",
     "snapshot_timestamp",
+    "system.lid_open",  # binary_sensor
+    "battery.state",  # binary_sensor (On AC Power)
 }
 
 # Display metrics handled by number/select/switch platforms (skip as sensors)
@@ -360,6 +362,8 @@ async def async_setup_entry(
             sub_device_map[dev_id] = meta
 
     for metric_key in flat:
+        if metric_key in _SKIP_KEYS:
+            continue
         key_suffix = metric_key.rsplit(".", 1)[-1] if "." in metric_key else metric_key
         if metric_key.startswith("display.") and key_suffix in _DISPLAY_CONTROL_KEYS:
             continue

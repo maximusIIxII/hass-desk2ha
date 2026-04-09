@@ -3,6 +3,17 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.8.2] - 2026-04-09
+
+### 🐛 Bug fixes
+- **Metric resolution for dotted sub-keys**: `thermals.fan.gpu`, `system.network.wlan.*`, and similar 3+-part keys were never resolved — GPU Fan Speed, WiFi SSID/Signal, WLAN throughput always showed "Unbekannt"
+- **Entity availability**: Entities now show "nicht verfügbar" instead of "Unbekannt" when the agent stops reporting a metric (e.g. WiFi metrics when on Ethernet)
+- **Sensor/binary_sensor duplicates**: `lid_open` and `battery.state` no longer created as both sensor AND binary_sensor — orphan sensor entities auto-cleaned on startup
+
+### 🔧 Improvements
+- **Device removal support**: `async_remove_config_entry_device` allows manual removal of orphaned devices via HA UI
+- **Zero-entity device cleanup**: Sub-devices with 0 entities are automatically removed on startup
+
 ## [0.8.1] - 2026-04-09
 
 ### 🐛 Bug fixes

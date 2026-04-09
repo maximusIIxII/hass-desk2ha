@@ -55,6 +55,19 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
             configuration_url=config_url,
         )
 
+    _SENTINEL = object()
+
+    @property
+    def available(self) -> bool:
+        """Return False if the metric key is absent from the current data."""
+        if self.coordinator.data is None:
+            return super().available
+        # Check if the metric exists at all in the data (not just value)
+        result = self._find_metric(self.coordinator.data, self._metric_key, self._SENTINEL)
+        if result is self._SENTINEL:
+            return False
+        return super().available
+
     @property
     def metric_value(self) -> Any:
         """Get the current metric value from coordinator data."""
@@ -63,7 +76,7 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
         return self._find_metric(self.coordinator.data, self._metric_key)
 
     @staticmethod
-    def _find_metric(data: dict[str, Any], key: str) -> Any:
+    def _find_metric(data: dict[str, Any], key: str, default: Any = None) -> Any:
         """Find a metric value in the nested response data."""
         # 1. Direct top-level key
         if key in data:
@@ -74,14 +87,21 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
 
         parts = key.split(".")
 
-        # 2. category.metric
-        if len(parts) == 2:
+        # 2. category.metric (supports dotted sub-keys like thermals.fan.gpu)
+        if len(parts) >= 2:
             category = data.get(parts[0])
-            if isinstance(category, dict):
-                sub = category.get(parts[1])
-                if isinstance(sub, dict) and "value" in sub:
-                    return sub["value"]
-                return sub
+            if isinstance(category, dict) and "value" not in category:
+                sub_key = ".".join(parts[1:])
+                if sub_key not in category:
+                    # Also try just parts[1] for simple 2-part keys
+                    if len(parts) == 2:
+                        return default
+                    # Fall through to device array path for 3+ parts
+                else:
+                    sub = category[sub_key]
+                    if isinstance(sub, dict) and "value" in sub:
+                        return sub["value"]
+                    return sub
 
         # 3. Device array
         if len(parts) >= 3:
@@ -99,12 +119,14 @@ class Desk2HAEntity(CoordinatorEntity[Desk2HACoordinator]):
                     if not isinstance(dev, dict):
                         continue
                     if dev.get("id") == target_id:
-                        val = dev.get(metric_name)
+                        if metric_name not in dev:
+                            return default
+                        val = dev[metric_name]
                         if isinstance(val, dict) and "value" in val:
                             return val["value"]
                         return val
 
-        return None
+        return default
 
 
 class Desk2HASubDeviceEntity(Desk2HAEntity):
