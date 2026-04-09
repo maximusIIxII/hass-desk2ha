@@ -15,6 +15,8 @@ CONF_DEVICE_KEY = "device_key"
 DEFAULT_PORT = 9693
 DEFAULT_SCAN_INTERVAL = 30
 
+CONF_FETCH_IMAGES = "fetch_product_images"
+
 SCHEMA_VERSION = "2.0.0"
 
 # Entity platforms to set up
