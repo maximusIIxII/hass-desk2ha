@@ -130,7 +130,12 @@ class Desk2HADisplayLight(Desk2HASubDeviceEntity, LightEntity):
 
 
 class Desk2HALitraLight(Desk2HASubDeviceEntity, LightEntity):
-    """Logitech Litra as a dimmable light with color temperature."""
+    """Logitech Litra as a dimmable light with color temperature.
+
+    State is read from agent metrics (HID polling), never assumed or restored.
+    The ``assumed_state`` flag tells HA not to optimistically update the UI
+    or send turn_on/turn_off commands to synchronise a restored state.
+    """
 
     _attr_color_mode = ColorMode.COLOR_TEMP
     _attr_supported_color_modes = {ColorMode.COLOR_TEMP}
@@ -138,6 +143,7 @@ class Desk2HALitraLight(Desk2HASubDeviceEntity, LightEntity):
     _attr_max_color_temp_kelvin = 6500
     _attr_min_mireds = 153  # 6500K
     _attr_max_mireds = 370  # 2700K
+    _attr_assumed_state = True
 
     def __init__(
         self,
