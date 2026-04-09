@@ -89,6 +89,14 @@ _GENERIC_USB_PATTERNS = [
     "generic usb",
     "billboard",
     "root hub",
+    "usb-massenspeicherger",
+    "usb mass storage",
+    "kompatibles usb-speicherger",
+    "compatible usb storage",
+    "winusb-ger",
+    "winusb device",
+    "microchip usb hub",
+    "usb hub monitor",
 ]
 
 

@@ -3,6 +3,16 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.8.0] - 2026-04-09
+
+### ✨ New features
+- **Peripheral Availability**: Sub-device entities go `unavailable` when BT peripheral reports `connected: false`
+
+### 🔧 Improvements
+- **Orphaned Device Cleanup**: Removes devices with Windows driver class manufacturer names (WinUsb-Gerät, etc.)
+- **Generic USB Filter Extended**: 8 new patterns including USB-Massenspeichergerät, Microchip USB Hub, WinUsb-Gerät
+- **Universal Receiver Cleanup**: Removed as standalone device (suppressed on agent side)
+
 ## [0.7.1] - 2026-04-09
 
 ### 🐛 Bug fixes
