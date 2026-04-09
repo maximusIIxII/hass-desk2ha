@@ -3,6 +3,13 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.5.1] - 2026-04-09
+
+### 🐛 Bug fixes
+- **Litra light wake-up**: `assumed_state = True` prevents HA from sending turn_on on state restore (was turning physical Litra on at every HA restart)
+- **Litra light entity always created**: No longer requires brightness data at setup time — entity is created even when the light is off, allowing HA control at all times
+- **manifest.json**: Removed empty arrays (`requirements`, `ssdp`, `dependencies`)
+
 ## [0.5.0] - 2026-04-09
 
 ### ✨ New features
