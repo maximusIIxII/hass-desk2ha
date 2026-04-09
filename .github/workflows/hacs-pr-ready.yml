@@ -1,0 +1,115 @@
+name: HACS PR Ready
+
+# Runs after a release is published and all CI checks have passed.
+# Finds the open PR on hacs/default and updates its body with the
+# required links so HACS reviewers can approve immediately.
+
+on:
+  workflow_run:
+    workflows: ["CI", "HACS Validation"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  update-hacs-pr:
+    # Only run when both CI and HACS Validation succeeded
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all required workflows passed
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the latest run status for each required workflow on main
+          ci_status=$(gh run list --repo "${{ github.repository }}" \
+            --workflow ci.yml --branch main --limit 1 --json conclusion -q '.[0].conclusion')
+          hacs_status=$(gh run list --repo "${{ github.repository }}" \
+            --workflow hacs.yml --branch main --limit 1 --json conclusion -q '.[0].conclusion')
+
+          echo "CI: $ci_status"
+          echo "HACS Validation: $hacs_status"
+
+          if [[ "$ci_status" == "success" && "$hacs_status" == "success" ]]; then
+            echo "all_green=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "all_green=false" >> "$GITHUB_OUTPUT"
+            echo "Not all workflows green yet — skipping PR update."
+          fi
+
+      - name: Get latest release and workflow run URLs
+        if: steps.check.outputs.all_green == 'true'
+        id: info
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+
+          # Latest release URL
+          release_url=$(gh release view --repo "$REPO" --json url -q '.url')
+          echo "release_url=$release_url" >> "$GITHUB_OUTPUT"
+
+          # Latest successful HACS Validation run URL
+          hacs_url=$(gh run list --repo "$REPO" --workflow hacs.yml --branch main \
+            --status success --limit 1 --json url -q '.[0].url')
+          echo "hacs_url=$hacs_url" >> "$GITHUB_OUTPUT"
+
+          # Latest successful CI run URL (contains hassfest job)
+          ci_url=$(gh run list --repo "$REPO" --workflow ci.yml --branch main \
+            --status success --limit 1 --json url -q '.[0].url')
+          echo "ci_url=$ci_url" >> "$GITHUB_OUTPUT"
+
+          echo "Release:  $release_url"
+          echo "HACS:     $hacs_url"
+          echo "CI:       $ci_url"
+
+      - name: Find and update HACS default PR
+        if: steps.check.outputs.all_green == 'true'
+        env:
+          HACS_TOKEN: ${{ secrets.HACS_PR_TOKEN }}
+          RELEASE_URL: ${{ steps.info.outputs.release_url }}
+          HACS_URL: ${{ steps.info.outputs.hacs_url }}
+          CI_URL: ${{ steps.info.outputs.ci_url }}
+        run: |
+          if [[ -z "$HACS_TOKEN" ]]; then
+            echo "::warning::HACS_PR_TOKEN secret not set — cannot update PR on hacs/default."
+            echo "Set a PAT with 'public_repo' scope as HACS_PR_TOKEN secret."
+            exit 0
+          fi
+
+          # Find our open PR on hacs/default
+          pr_number=$(GH_TOKEN="$HACS_TOKEN" gh pr list --repo hacs/default \
+            --author maximusIIxII --state open --json number -q '.[0].number')
+
+          if [[ -z "$pr_number" ]]; then
+            echo "No open PR found on hacs/default — nothing to update."
+            exit 0
+          fi
+
+          echo "Updating hacs/default#$pr_number"
+
+          body=$(cat <<'BODY'
+          ## Checklist
+
+          - [x] I've read the [publishing documentation](https://hacs.xyz/docs/publish/start).
+          - [x] I've added the [HACS action](https://hacs.xyz/docs/publish/action) to my repository.
+          - [x] (For integrations only) I've added the [hassfest action](https://developers.home-assistant.io/blog/2020/04/16/hassfest/) to my repository.
+          - [x] The actions are passing without any disabled checks in my repository.
+          - [x] I've added a link to the action run on my repository below in the links section.
+          - [x] I've created a new release of the repository after the validation actions were run successfully.
+
+          ## Links
+
+          BODY
+          )
+
+          # Append the actual links (unindented)
+          body+="Link to current release: ${RELEASE_URL}"$'\n'
+          body+="Link to successful HACS action (without the \`ignore\` key): ${HACS_URL}"$'\n'
+          body+="Link to successful hassfest action (if integration): ${CI_URL}"
+
+          GH_TOKEN="$HACS_TOKEN" gh pr edit "$pr_number" --repo hacs/default --body "$body"
+          echo "✅ PR hacs/default#$pr_number updated with all links."
