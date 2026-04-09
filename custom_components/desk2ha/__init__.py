@@ -8,6 +8,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
@@ -38,8 +39,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Desk2HA from a config entry."""
     coordinator = Desk2HACoordinator(hass, entry)
 
-    # Fetch initial data
-    await coordinator.fetch_info()
+    # Fetch initial data — raise ConfigEntryNotReady so HA retries instead of
+    # marking the entry as permanently broken when the agent is unreachable.
+    try:
+        await coordinator.fetch_info()
+    except Exception as exc:
+        raise ConfigEntryNotReady(f"Cannot reach agent: {exc}") from exc
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})
