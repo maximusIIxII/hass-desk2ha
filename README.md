@@ -25,9 +25,12 @@ Brings your entire desk — PC, monitors, peripherals — into Home Assistant. W
 - **Display controls**: Brightness, contrast, volume, input source, KVM switch, PBP mode
 - **Webcam controls**: Brightness, contrast, saturation, white balance, focus, zoom via UVC
 - **Logitech Litra**: Power, brightness, color temperature as HA light entity
+- **Bluetooth peripherals**: Paired BLE + Classic devices with battery levels (keyboard, mouse, headset, earbuds)
 - **Peripheral detection**: USB devices, wireless receivers (Dell, Logitech, Jabra, Corsair, SteelSeries, Razer)
+- **Product images**: Opt-in fetch of real product photos from Dell, Lenovo, HP, Logitech websites
 - **Power monitoring**: USB PD charger status, AC adapter wattage, Dell DCM thermals
 - **Sub-devices**: Each display, peripheral, and receiver appears as its own HA device
+- **Custom Lovelace card**: Dedicated dashboard card with system gauges, thermals, peripherals overview
 - **Agent updates**: See available updates + install from HA
 - **Auto-discovery**: Zeroconf finds agents on your network
 - **Remote install**: Deploy the agent on remote machines via SSH or WinRM
@@ -86,11 +89,13 @@ In the integration setup, choose "Install agent on remote machine" and provide S
 | `desk2ha.fleet_status` | Get status of all configured desks (online/offline, versions, collectors) |
 | `desk2ha.refresh` | Force-refresh metrics from one or all desks |
 | `desk2ha.restart_agent` | Send restart command to a specific agent |
+| `desk2ha.fetch_product_images` | Download product images from manufacturer websites for all desks |
 
 ## Options
 
 In the integration options you can configure:
 - **Poll interval**: How often to fetch metrics (default: 30s, min: 10s)
+- **Fetch product images**: Download product photos from manufacturer websites (opt-in)
 
 ## Requirements
 
@@ -105,11 +110,21 @@ In the integration options you can configure:
 | **Display entities show "not available"** | Display controls require the agent to run interactively (not as service) for DDC/CI access. | By design |
 | **MQTT entities duplicate HTTP entities** | If both HTTP polling and MQTT are active, the same metrics appear twice. Use one transport or the other, not both. | Planned fix |
 
+## Custom Lovelace Card
+
+Add the Desk2HA card to any dashboard for a complete desk overview:
+
+```yaml
+type: custom:desk2ha-card
+entity: sensor.desk2ha_cpu_usage
+```
+
+The card shows system gauges (CPU, RAM, disk, WiFi), thermals, battery status, and connected peripherals with Bluetooth battery levels. Registered automatically when the integration loads.
+
 ## Upcoming Features
 
-- **Custom Lovelace card**: Dedicated dashboard card showing the full desk overview
-- **Product images Tier 3**: Fetch real product photos from vendor websites
 - **Vendor battery levels**: Corsair, SteelSeries, Razer battery via HID
+- **Prometheus endpoint**: Metrics in Prometheus scrape format
 
 ## License
 
