@@ -80,6 +80,7 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="distribute",
             data_schema=vol.Schema({}),
             description_placeholders={
+                "installer_link": "[GitHub Releases](https://github.com/maximusIIxII/desk2ha-agent/releases/latest)",
                 "install_url": install_url,
                 "pairing_code": pairing_code,
             },

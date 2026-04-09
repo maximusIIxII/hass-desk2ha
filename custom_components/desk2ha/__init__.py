@@ -25,6 +25,13 @@ _ORPHANED_UNIQUE_IDS = {
     "power_source_binary",
 }
 
+# Sensor entities that should be removed (handled by other platforms now).
+# Checked only for the "sensor" domain to avoid removing binary_sensor equivalents.
+_SENSOR_ONLY_ORPHANS = {
+    "system_lid_open",  # now binary_sensor only
+    "battery_state",  # now binary_sensor only (On AC Power)
+}
+
 # Device names that indicate generic/orphaned sub-devices to remove.
 _ORPHANED_DEVICE_NAMES = {
     "usb-eingabegerät",
@@ -50,6 +57,15 @@ _DRIVER_CLASS_MANUFACTURERS = {
     "(standardsystemgeräte)",
     "(standard system devices)",
 }
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    device_entry: dr.DeviceEntry,
+) -> bool:
+    """Allow manual removal of orphaned devices from the HA UI."""
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -150,11 +166,18 @@ def _cleanup_orphaned_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
                 removed += 1
                 break
         else:
-            # Remove old index-based USB and receiver entities
             uid = entity.unique_id
+            # Remove old index-based USB and receiver entities
             if _OLD_USB_INDEX_PATTERN.search(uid) or _OLD_RECEIVER_PATTERN.search(uid):
                 registry.async_remove(entity.entity_id)
                 removed += 1
+            # Remove sensor entities that are now handled by other platforms
+            elif entity.entity_id.startswith("sensor."):
+                for suffix in _SENSOR_ONLY_ORPHANS:
+                    if uid.endswith(suffix):
+                        registry.async_remove(entity.entity_id)
+                        removed += 1
+                        break
 
     if removed:
         logger.info("Removed %d orphaned entity registry entries", removed)
@@ -177,9 +200,26 @@ def _cleanup_orphaned_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
             logger.warning("Cleanup: could not remove device %s", device.id, exc_info=True)
         removed_ids.add(device.id)
 
+    # Find the main host device (most entities, no via_device)
+    host_device_id: str | None = None
+    max_entities = 0
+    for device in devices:
+        count = len(er.async_entries_for_device(ent_registry, device.id))
+        if count > max_entities:
+            max_entities = count
+            host_device_id = device.id
+
     for device in devices:
         if device.id in removed_ids:
             continue
+
+        # 0. Remove sub-devices with zero entities (always orphans)
+        if device.id != host_device_id:
+            entity_count = len(er.async_entries_for_device(ent_registry, device.id))
+            if entity_count == 0:
+                _remove_device(device)
+                continue
+
         name = (device.name or "").lower().strip()
 
         # 1. Remove devices with generic/orphaned names
