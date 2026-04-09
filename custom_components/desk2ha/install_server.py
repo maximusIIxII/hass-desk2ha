@@ -7,6 +7,7 @@ so the page can be accessed without HA authentication.
 
 from __future__ import annotations
 
+import html
 import logging
 import secrets
 import time
@@ -47,6 +48,10 @@ class _PhoneHomeData:
     hardware: dict[str, Any] = field(default_factory=dict)
 
 
+_PAIR_RATE_MAX = 10  # max failed pairing attempts per IP per minute
+_PAIR_RATE_WINDOW = 60.0  # seconds
+
+
 class InstallServer:
     """Manages install tokens and serves install pages/scripts."""
 
@@ -54,6 +59,7 @@ class InstallServer:
         self._hass = hass
         self._pending: dict[str, _PendingInstall] = {}
         self._phone_home_queue: list[_PhoneHomeData] = []
+        self._pair_failures: dict[str, list[float]] = {}  # IP -> list of timestamps
 
     # ------------------------------------------------------------------
     # Token management
@@ -98,7 +104,6 @@ class InstallServer:
 
     def _generate_pairing_code(self) -> str:
         """Generate a unique 6-char alphanumeric pairing code (no ambiguous chars)."""
-        import random
         import string
 
         # Avoid ambiguous chars: 0/O, 1/I/L
@@ -106,7 +111,7 @@ class InstallServer:
         alphabet += string.digits.replace("0", "").replace("1", "")
         existing = {p.pairing_code for p in self._pending.values()}
         for _ in range(100):
-            code = "".join(random.choices(alphabet, k=_PAIRING_CODE_LEN))  # noqa: S311
+            code = "".join(secrets.choice(alphabet) for _ in range(_PAIRING_CODE_LEN))
             if code not in existing:
                 return code
         return secrets.token_hex(3).upper()[:_PAIRING_CODE_LEN]
@@ -155,12 +160,13 @@ class InstallServer:
                 status=404,
             )
 
-        base_url = pending.ha_url.rstrip("/")
-        html = _INSTALL_HTML.safe_substitute(
-            token=token,
+        base_url = html.escape(pending.ha_url.rstrip("/"))
+        escaped_token = html.escape(token)
+        page = _INSTALL_HTML.safe_substitute(
+            token=escaped_token,
             base_url=base_url,
         )
-        return web.Response(text=html, content_type="text/html")
+        return web.Response(text=page, content_type="text/html")
 
     async def _handle_script_sh(self, request: web.Request) -> web.Response:
         """Serve the Unix (macOS/Linux) install script."""
@@ -202,12 +208,29 @@ class InstallServer:
             headers={"Content-Disposition": "inline; filename=install-desk2ha.ps1"},
         )
 
+    def _check_pair_rate_limit(self, ip: str) -> bool:
+        """Return True if the IP has exceeded the pairing rate limit."""
+        now = time.time()
+        attempts = self._pair_failures.get(ip, [])
+        # Purge old entries
+        attempts = [t for t in attempts if now - t < _PAIR_RATE_WINDOW]
+        self._pair_failures[ip] = attempts
+        return len(attempts) >= _PAIR_RATE_MAX
+
+    def _record_pair_failure(self, ip: str) -> None:
+        """Record a failed pairing attempt for rate limiting."""
+        self._pair_failures.setdefault(ip, []).append(time.time())
+
     async def _handle_pair(self, request: web.Request) -> web.Response:
         """Handle pairing code from setup wizard.
 
         The agent's setup wizard POSTs a pairing code.  We validate it,
         return the agent_token + phone_home_token, and trigger config flow.
         """
+        remote_ip = request.remote or "unknown"
+        if self._check_pair_rate_limit(remote_ip):
+            return web.json_response({"error": "Too many attempts. Try again later."}, status=429)
+
         try:
             data = await request.json()
         except Exception:
@@ -219,6 +242,7 @@ class InstallServer:
 
         pending = self.validate_pairing_code(code)
         if pending is None:
+            self._record_pair_failure(remote_ip)
             return web.json_response({"error": "Invalid pairing code"}, status=403)
 
         token_key = self.find_token_by_code(code)
@@ -522,6 +546,7 @@ phone_home_token = "$$PHONE_HOME_TOKEN"
 level = "INFO"
 TOML
 
+chmod 600 "$$CONFIG_DIR/config.toml"
 ok "Config written to $$CONFIG_DIR/config.toml"
 
 # --- 5. Set up service ---
@@ -668,6 +693,7 @@ phone_home_token = "$$PhoneHomeToken"
 level = "INFO"
 "@
 $$config | Out-File -FilePath "$$configDir\\config.toml" -Encoding UTF8
+icacls "$$configDir\\config.toml" /inheritance:r /grant:r "$${env:USERNAME}:(R,W)" | Out-Null
 Write-Ok "Config written to $$configDir\\config.toml"
 
 # --- 5. Set up scheduled task ---
