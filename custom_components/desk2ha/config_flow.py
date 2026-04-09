@@ -13,6 +13,7 @@ from .const import (
     CONF_AGENT_TOKEN,
     CONF_AGENT_URL,
     CONF_DEVICE_KEY,
+    CONF_FETCH_IMAGES,
     CONF_POLL_INTERVAL,
     CONF_TRANSPORT,
     DEFAULT_PORT,
@@ -330,6 +331,10 @@ class Desk2HAOptionsFlow(OptionsFlow):
                             CONF_POLL_INTERVAL, DEFAULT_SCAN_INTERVAL
                         ),
                     ): vol.All(int, vol.Range(min=10, max=600)),
+                    vol.Optional(
+                        CONF_FETCH_IMAGES,
+                        default=self._config_entry.options.get(CONF_FETCH_IMAGES, False),
+                    ): bool,
                 }
             ),
         )
