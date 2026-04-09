@@ -31,6 +31,8 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize the config flow."""
         self._discovered_url: str = ""
         self._install_result: Any = None
+        self._scan_results: dict[str, Any] = {}
+        self._selected_host: str = ""
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle setup method selection."""
@@ -39,7 +41,7 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
             if method == "manual_url":
                 return await self.async_step_manual()
             if method == "install_agent":
-                return await self.async_step_install_choose_os()
+                return await self.async_step_install_scan()
             return await self.async_step_manual()
 
         return self.async_show_form(
@@ -54,6 +56,54 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
                     ),
                 }
             ),
+        )
+
+    async def async_step_install_scan(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Scan the network for hosts and let user pick one or enter manually."""
+        if user_input is not None:
+            selected = user_input.get("host", "")
+            if selected == "_manual_":
+                return await self.async_step_install_choose_os()
+            # Pre-fill host from scan results
+            host_info = self._scan_results.get(selected, {})
+            self._selected_host = selected
+            os_hint = host_info.get("os_hint", "linux")
+            if os_hint == "windows":
+                return await self.async_step_install_winrm()
+            return await self.async_step_install_ssh()
+
+        # Run network scan
+        from .discovery import scan_network
+
+        hosts = await scan_network()
+        # Filter out hosts that already have an agent
+        installable = [h for h in hosts if not h.agent]
+
+        choices: dict[str, str] = {}
+        for h in installable:
+            self._scan_results[h.ip] = {
+                "hostname": h.hostname,
+                "os_hint": h.os_hint,
+                "ssh": h.ssh,
+                "winrm": h.winrm,
+            }
+            choices[h.ip] = h.label
+
+        # Always offer manual entry
+        choices["_manual_"] = "Enter host manually..."
+
+        return self.async_show_form(
+            step_id="install_scan",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("host"): vol.In(choices),
+                }
+            ),
+            description_placeholders={
+                "count": str(len(installable)),
+            },
         )
 
     async def async_step_install_choose_os(
@@ -103,11 +153,12 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_install_complete()
             errors["base"] = "install_failed"
 
+        default_host = self._selected_host or ""
         return self.async_show_form(
             step_id="install_ssh",
             data_schema=vol.Schema(
                 {
-                    vol.Required("host"): str,
+                    vol.Required("host", default=default_host): str,
                     vol.Optional("ssh_port", default=22): int,
                     vol.Required("username"): str,
                     vol.Required("password"): str,
@@ -138,11 +189,12 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_install_complete()
             errors["base"] = "install_failed"
 
+        default_host = self._selected_host or ""
         return self.async_show_form(
             step_id="install_winrm",
             data_schema=vol.Schema(
                 {
-                    vol.Required("host"): str,
+                    vol.Required("host", default=default_host): str,
                     vol.Required("username"): str,
                     vol.Required("password"): str,
                     vol.Optional("agent_port", default=DEFAULT_PORT): int,

@@ -15,6 +15,13 @@
           "agent_token": "Bearer Token (optional)"
         }
       },
+      "install_scan": {
+        "title": "Discovered Hosts",
+        "description": "Found {count} machines on your network. Select a host to install the agent, or choose manual entry.",
+        "data": {
+          "host": "Target Host"
+        }
+      },
       "install_choose_os": {
         "title": "Remote Installation",
         "description": "Select the operating system of the target machine where the agent will be installed.",
