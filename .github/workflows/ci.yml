@@ -44,7 +44,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install pytest pytest-asyncio aiohttp
-      - run: pytest tests/ -x --tb=short
+      - run: pytest tests/ -x --tb=short -v
 
   hassfest:
     runs-on: ubuntu-latest
