@@ -380,7 +380,13 @@ class Desk2HAConfigFlow(ConfigFlow, domain=DOMAIN):
         device_key = health.get("device_key")
         if device_key:
             await self.async_set_unique_id(device_key)
-            self._abort_if_unique_id_configured()
+            self._abort_if_unique_id_configured(updates={"data": {**{}, "url": url}})
+        else:
+            # Fallback for older agents without device_key in health:
+            # abort if any existing entry already points to this URL.
+            for entry in self._async_current_entries():
+                if entry.data.get(CONF_AGENT_URL) == url:
+                    return self.async_abort(reason="already_configured")
 
         self.context["title_placeholders"] = {
             "name": health.get("hostname", host),
