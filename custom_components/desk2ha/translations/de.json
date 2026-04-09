@@ -7,6 +7,10 @@
           "method": "Wie moechten Sie ein Geraet hinzufuegen?"
         }
       },
+      "distribute": {
+        "title": "Agent installieren",
+        "description": "**Option 1 — Installer (empfohlen):**\nLade den Installer von [GitHub Releases](https://github.com/maximusIIxII/desk2ha-agent/releases/latest) auf dem Zielrechner herunter, starte ihn und gib diesen Pairing-Code ein:\n\n## {pairing_code}\n\n**Option 2 — Terminal:**\nOeffne diese URL auf dem Zielrechner: {install_url}\n\nBeide Optionen sind 1 Stunde gueltig."
+      },
       "manual": {
         "title": "Manuelle Konfiguration",
         "description": "Geben Sie die URL und das optionale Bearer-Token fuer den Desk2HA Agent ein.",
@@ -30,7 +34,8 @@
     },
     "abort": {
       "already_configured": "Dieses Geraet ist bereits konfiguriert.",
-      "cannot_connect": "Verbindung zum gefundenen Agent nicht moeglich."
+      "cannot_connect": "Verbindung zum gefundenen Agent nicht moeglich.",
+      "install_server_unavailable": "Install-Server laeuft nicht. Integration neu laden."
     }
   },
   "options": {

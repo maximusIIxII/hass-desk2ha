@@ -7,6 +7,10 @@
           "method": "How would you like to add a device?"
         }
       },
+      "distribute": {
+        "title": "Install Agent",
+        "description": "**Option 1 — Installer (recommended):**\nDownload the installer from [GitHub Releases](https://github.com/maximusIIxII/desk2ha-agent/releases/latest) on the target machine, run it, and enter this pairing code:\n\n## {pairing_code}\n\n**Option 2 — Advanced (terminal):**\nOpen this URL on the target machine: {install_url}\n\nBoth options expire in 1 hour."
+      },
       "manual": {
         "title": "Manual Configuration",
         "description": "Enter the URL and optional Bearer token for the Desk2HA agent.",
@@ -30,7 +34,8 @@
     },
     "abort": {
       "already_configured": "This device is already configured.",
-      "cannot_connect": "Cannot connect to the discovered agent."
+      "cannot_connect": "Cannot connect to the discovered agent.",
+      "install_server_unavailable": "Install server is not running. Try reloading the integration."
     }
   },
   "options": {
