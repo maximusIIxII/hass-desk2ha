@@ -55,7 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         from .services import async_setup_services
 
         await async_setup_services(hass)
-        _register_card(hass)
+        await _register_card(hass)
         _register_install_server(hass)
 
     # Clean up orphaned entities and devices from previous versions
@@ -93,10 +93,14 @@ def _register_install_server(hass: HomeAssistant) -> None:
         logger.info("Install server ready")
 
 
-def _register_card(hass: HomeAssistant) -> None:
+async def _register_card(hass: HomeAssistant) -> None:
     """Serve the Lovelace card JS file via HA's HTTP server."""
     if CARD_JS.is_file():
-        hass.http.register_static_path(CARD_URL_PATH, str(CARD_JS), cache_headers=False)
+        from homeassistant.components.http import StaticPathConfig
+
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(CARD_URL_PATH, str(CARD_JS), cache_headers=False)]
+        )
         logger.info("Registered Lovelace card at %s", CARD_URL_PATH)
 
 

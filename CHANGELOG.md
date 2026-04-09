@@ -3,6 +3,11 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.7.1] - 2026-04-09
+
+### 🐛 Bug fixes
+- **Lovelace card registration**: `register_static_path` replaced with `async_register_static_paths` — fixes `AttributeError` on HA 2025.x+ that caused integration setup to fail
+
 ## [0.7.0] - 2026-04-09
 
 ### ✨ New features
