@@ -50,12 +50,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    # Register services and card (only once, on first entry)
+    # Register services, card, and install server (only once, on first entry)
     if len(hass.data[DOMAIN]) == 1:
         from .services import async_setup_services
 
         await async_setup_services(hass)
         _register_card(hass)
+        _register_install_server(hass)
 
     # Clean up orphaned entities and devices from previous versions
     _cleanup_orphaned_entities(hass, entry)
@@ -79,6 +80,17 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await async_unload_services(hass)
 
     return unload_ok
+
+
+def _register_install_server(hass: HomeAssistant) -> None:
+    """Set up the install page server for agent distribution."""
+    from .install_server import InstallServer
+
+    if f"{DOMAIN}_install_server" not in hass.data:
+        server = InstallServer(hass)
+        server.register_routes(hass.http.app)
+        hass.data[f"{DOMAIN}_install_server"] = server
+        logger.info("Install server ready")
 
 
 def _register_card(hass: HomeAssistant) -> None:
