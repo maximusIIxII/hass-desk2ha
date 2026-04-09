@@ -1,0 +1,38 @@
+blueprint:
+  name: "Desk2HA: Lock on Away"
+  description: >
+    Lock the workstation when you leave home (HA person entity changes to "not_home").
+    Uses the Desk2HA lock screen button.
+  domain: automation
+  input:
+    person_entity:
+      name: Person
+      description: The person entity to track.
+      selector:
+        entity:
+          domain: person
+    lock_button:
+      name: Lock Screen Button
+      description: The Desk2HA lock screen button entity.
+      selector:
+        entity:
+          integration: desk2ha
+          domain: button
+
+trigger:
+  - platform: state
+    entity_id: !input person_entity
+    to: "not_home"
+
+condition:
+  - condition: state
+    entity_id: !input lock_button
+    state: "available"
+    match: any
+
+action:
+  - service: button.press
+    target:
+      entity_id: !input lock_button
+
+mode: single

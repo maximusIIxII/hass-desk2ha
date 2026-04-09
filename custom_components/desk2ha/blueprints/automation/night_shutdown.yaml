@@ -1,0 +1,45 @@
+blueprint:
+  name: "Desk2HA: Night Shutdown"
+  description: >
+    Automatically put the workstation to sleep or shut it down at a
+    scheduled time if it's still running.
+  domain: automation
+  input:
+    shutdown_time:
+      name: Shutdown Time
+      description: Time to trigger the shutdown.
+      default: "23:00:00"
+      selector:
+        time:
+    action_button:
+      name: Action Button
+      description: The Desk2HA sleep or shutdown button.
+      selector:
+        entity:
+          integration: desk2ha
+          domain: button
+    agent_sensor:
+      name: Agent Status Sensor
+      description: Any Desk2HA sensor to check if the PC is online.
+      selector:
+        entity:
+          integration: desk2ha
+          domain: sensor
+
+trigger:
+  - platform: time
+    at: !input shutdown_time
+
+condition:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: !input agent_sensor
+        state: "unavailable"
+
+action:
+  - service: button.press
+    target:
+      entity_id: !input action_button
+
+mode: single

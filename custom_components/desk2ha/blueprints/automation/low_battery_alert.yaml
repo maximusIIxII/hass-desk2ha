@@ -1,0 +1,58 @@
+blueprint:
+  name: "Desk2HA: Low Battery Alert"
+  description: >
+    Send a notification when the laptop battery drops below a threshold
+    and is not charging.
+  domain: automation
+  input:
+    battery_sensor:
+      name: Battery Level
+      description: The Desk2HA battery level sensor.
+      selector:
+        entity:
+          integration: desk2ha
+          domain: sensor
+          device_class: battery
+    charging_sensor:
+      name: On AC Power
+      description: The Desk2HA AC power binary sensor.
+      selector:
+        entity:
+          integration: desk2ha
+          domain: binary_sensor
+    threshold:
+      name: Battery Threshold
+      description: Alert when battery drops below this percentage.
+      default: 20
+      selector:
+        number:
+          min: 5
+          max: 50
+          step: 5
+          unit_of_measurement: "%"
+    notify_service:
+      name: Notification Service
+      description: "The notify service to call (e.g. notify.mobile_app_phone)."
+      default: notify.persistent_notification
+      selector:
+        text:
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input battery_sensor
+    below: !input threshold
+
+condition:
+  - condition: state
+    entity_id: !input charging_sensor
+    state: "off"
+
+action:
+  - service: !input notify_service
+    data:
+      title: "Desk2HA: Low Battery"
+      message: >
+        {{ state_attr(trigger.entity_id, 'friendly_name') }} is at
+        {{ states(trigger.entity_id) }}%. Plug in the charger.
+
+mode: single

@@ -1,0 +1,65 @@
+blueprint:
+  name: "Desk2HA: Morning Routine"
+  description: >
+    Turn on desk lights and set display brightness when you start working.
+    Triggers when the PC comes online (agent becomes available).
+  domain: automation
+  input:
+    desk_entity:
+      name: Desk Agent Status
+      description: The Desk2HA agent uptime sensor (indicates the PC is on).
+      selector:
+        entity:
+          integration: desk2ha
+          domain: sensor
+    display_brightness:
+      name: Display Brightness
+      description: The display brightness number entity to set.
+      selector:
+        entity:
+          integration: desk2ha
+          domain: number
+    brightness_value:
+      name: Brightness Level
+      description: Brightness percentage to set (0-100).
+      default: 70
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 5
+          unit_of_measurement: "%"
+    desk_light:
+      name: Desk Light (optional)
+      description: A light entity to turn on (e.g. Litra Glow or any HA light).
+      default: {}
+      selector:
+        entity:
+          domain: light
+
+trigger:
+  - platform: state
+    entity_id: !input desk_entity
+    from: "unavailable"
+
+condition:
+  - condition: time
+    after: "06:00:00"
+    before: "12:00:00"
+
+action:
+  - service: number.set_value
+    target:
+      entity_id: !input display_brightness
+    data:
+      value: !input brightness_value
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ input_desk_light is defined and input_desk_light != '' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input desk_light
+
+mode: single
