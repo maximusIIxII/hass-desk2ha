@@ -3,6 +3,13 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.8.6] - 2026-04-09
+
+### 🔧 Improvements
+- **CI version consistency checks**: Release workflow now blocks if git tag ≠ manifest.json version or CHANGELOG entry missing; also reports latest agent version on PyPI
+- **Entity availability tests**: 25 tests verify action entities stay available, metric resolution works for all key patterns, and `available` property is correct
+- **Version consistency tests**: CI validates manifest.json is valid semver with matching dated CHANGELOG entry
+
 ## [0.8.5] - 2026-04-09
 
 ### 🐛 Bug fixes
