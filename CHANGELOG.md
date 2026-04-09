@@ -7,6 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji catego
 
 ### 🐛 Bug fixes
 - **Lovelace card registration**: `register_static_path` replaced with `async_register_static_paths` — fixes `AttributeError` on HA 2025.x+ that caused integration setup to fail
+- **Duplicate Zeroconf discovery**: Agent appeared as "Entdeckt" despite being configured — `unique_id` migration + `device_key` check in Zeroconf flow
 
 ## [0.7.0] - 2026-04-09
 
