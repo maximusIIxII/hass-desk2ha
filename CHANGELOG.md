@@ -3,6 +3,14 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.7.0] - 2026-04-09
+
+### ✨ New features
+- **Agent Distribution (Phone Home)**: New "Distribute agent" option in config flow — generates install URL + 6-character pairing code
+- **Install Page Server**: Self-contained HTML page at `/desk2ha/install/{token}` with OS-detection and platform-specific install scripts (macOS/Linux/Windows)
+- **Pairing Code**: Setup wizard on agent uses pairing code to securely connect to HA — no manual URL/token entry needed
+- **Auto Config Entry**: Agent phones home after install → HA creates integration entry automatically
+
 ## [0.6.1] - 2026-04-09
 
 ### 🐛 Bug fixes
