@@ -3,6 +3,11 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.8.4] - 2026-04-09
+
+### 🐛 Bug fixes
+- **Device firmware version stuck**: `sw_version` in device info never updated after initial setup — coordinator now refreshes `agent_info` when agent reports a new version
+
 ## [0.8.3] - 2026-04-09
 
 ### 🔒 Security
