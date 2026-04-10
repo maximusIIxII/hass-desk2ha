@@ -37,6 +37,20 @@ async def async_setup_entry(
                 "system.shutdown",
                 "mdi:power",
             ),
+            Desk2HACommandButton(
+                coordinator,
+                "system_restart",
+                "Restart",
+                "system.restart",
+                "mdi:restart",
+            ),
+            Desk2HACommandButton(
+                coordinator,
+                "system_hibernate",
+                "Hibernate",
+                "system.hibernate",
+                "mdi:power-sleep",
+            ),
         ]
     )
 

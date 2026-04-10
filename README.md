@@ -41,7 +41,7 @@ Brings your entire desk — PC, monitors, peripherals — into Home Assistant. W
 - **Agent distribution**: Generate install URL + pairing code, deploy agent from HA config flow
 - **Remote install**: Deploy the agent on remote machines via SSH (Linux/macOS) or WinRM (Windows)
 - **Fleet management**: Monitor multiple desks with fleet_status, refresh, restart services
-- **Workspace blueprints**: Ready-made automations (Morning Routine, Lock on Away, Low Battery Alert, Night Shutdown)
+- **Workspace blueprints**: Ready-made automations (see [Blueprints](#blueprints))
 - **Dynamic entities**: Only creates entities for metrics your agent actually reports
 - **Security hardened**: SSH TOFU, XSS prevention, pairing rate limiting, input validation, path traversal protection
 
@@ -90,7 +90,7 @@ Choose "Install agent on remote machine". The integration scans your LAN for rea
 | **Switch** | Auto Brightness, Auto Color Temperature, BLE Scanning |
 | **Light** | Display Brightness (dimmable), Logitech Litra (brightness + color temp) |
 | **Media Player** | Display Speaker Volume |
-| **Button** | Refresh Data, Restart Agent, Lock Screen, Sleep, Shutdown |
+| **Button** | Refresh Data, Restart Agent, Lock Screen, Sleep, Shutdown, Restart, Hibernate |
 | **Update** | Agent version check + install |
 
 ## Services
@@ -102,6 +102,22 @@ Choose "Install agent on remote machine". The integration scans your LAN for rea
 | `desk2ha.restart_agent` | Send restart command to a specific agent |
 | `desk2ha.wake_on_lan` | Send Wake-on-LAN magic packet via agent |
 | `desk2ha.fetch_product_images` | Download product images from manufacturer websites for all desks |
+
+## Blueprints
+
+Ready-made automation blueprints included with the integration. Import them from **Settings > Automations > Blueprints > Import Blueprint**, or they appear automatically when Desk2HA is installed.
+
+| Blueprint | Trigger | Default |
+|-----------|---------|---------|
+| **Morning Routine** | PC session detected | Lights on, display wake |
+| **Lock on Away** | Person leaves home | Lock workstation |
+| **Night Shutdown** | Time-based | Shut down PC |
+| **Low Battery Alert** | Battery < threshold | Notification | 20% |
+| **High CPU Temperature** | CPU temp > threshold for 2 min | Notification | 90 °C |
+| **Disk Space Low** | Disk usage > threshold | Notification | 90% |
+| **High RAM Usage** | RAM usage > threshold for 5 min | Notification | 90% |
+
+Each blueprint lets you pick the target sensor, threshold, and notification service in the HA UI.
 
 ## Options
 
@@ -146,8 +162,7 @@ The card shows system gauges (CPU, RAM, disk, WiFi), thermals, battery status, a
 - **USB PD Dock Monitoring**: Thunderbolt/USB4-specific metrics for docking stations
 - **Multi-host device tracking**: Device follows user across machines
 - **Fleet management policies**: Centralized configuration and compliance rules
-- **Energy Dashboard**: Desk power consumption in HA Energy Dashboard
-- **HACS Default Repository**: Approval for HACS default store
+- **HACS Default Repository**: Approval pending (PR #6850)
 
 ## License
 

@@ -1,0 +1,47 @@
+blueprint:
+  name: "Desk2HA: Disk Space Alert"
+  description: >
+    Send a notification when disk usage exceeds a threshold.
+    Helps prevent running out of disk space.
+  domain: automation
+  input:
+    disk_sensor:
+      name: Disk Usage
+      description: The Desk2HA disk usage sensor (percentage).
+      selector:
+        entity:
+          integration: desk2ha
+          domain: sensor
+    threshold:
+      name: Disk Usage Threshold
+      description: Alert when disk usage exceeds this percentage.
+      default: 90
+      selector:
+        number:
+          min: 70
+          max: 99
+          step: 5
+          unit_of_measurement: "%"
+    notify_service:
+      name: Notification Service
+      description: "The notify service to call (e.g. notify.mobile_app_phone)."
+      default: notify.persistent_notification
+      selector:
+        text:
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input disk_sensor
+    above: !input threshold
+
+condition: []
+
+action:
+  - service: !input notify_service
+    data:
+      title: "Desk2HA: Disk Space Low"
+      message: >
+        {{ state_attr(trigger.entity_id, 'friendly_name') }} is at
+        {{ states(trigger.entity_id) }}%. Free up disk space.
+
+mode: single
