@@ -212,6 +212,67 @@ async def async_setup_entry(
                 )
             )
 
+    # UVC webcam controls
+    _WEBCAM_NUMBERS: dict[str, tuple[str, float, float, float, str | None, str]] = {
+        # suffix: (command, min, max, step, unit, icon)
+        "brightness": ("webcam.set_brightness", 0, 255, 1, None, "mdi:brightness-6"),
+        "contrast": ("webcam.set_contrast", 0, 255, 1, None, "mdi:contrast-box"),
+        "saturation": ("webcam.set_saturation", 0, 255, 1, None, "mdi:palette"),
+        "sharpness": ("webcam.set_sharpness", 0, 255, 1, None, "mdi:blur"),
+        "gain": ("webcam.set_gain", 0, 255, 1, None, "mdi:tune-variant"),
+        "gamma": ("webcam.set_gamma", 0, 500, 1, None, "mdi:gamma"),
+        "zoom": ("webcam.set_zoom", 100, 400, 1, None, "mdi:magnify-plus"),
+        "focus": ("webcam.set_focus", 0, 255, 1, None, "mdi:camera-enhance"),
+        "exposure": ("webcam.set_exposure", -13, 0, 1, None, "mdi:camera-iris"),
+        "white_balance": (
+            "webcam.set_white_balance",
+            2000,
+            10000,
+            100,
+            "K",
+            "mdi:white-balance-sunny",
+        ),
+        "pan": ("webcam.set_pan", -180, 180, 1, "°", "mdi:pan-horizontal"),
+        "tilt": ("webcam.set_tilt", -180, 180, 1, "°", "mdi:pan-vertical"),
+        "backlight_compensation": (
+            "webcam.set_backlight_compensation",
+            0,
+            10,
+            1,
+            None,
+            "mdi:brightness-auto",
+        ),
+    }
+
+    for peripheral in extract_peripherals(data):
+        dev_id = peripheral.get("id", "")
+        if not dev_id.startswith("peripheral.webcam_"):
+            continue
+
+        meta = peripheral_metadata(peripheral, coordinator.device_key)
+        if not meta:
+            continue
+
+        for suffix, (cmd, mn, mx, step, unit, icon) in _WEBCAM_NUMBERS.items():
+            if suffix not in peripheral:
+                continue
+            entities.append(
+                Desk2HANumber(
+                    coordinator=coordinator,
+                    metric_key=f"{dev_id}.{suffix}",
+                    name=suffix.replace("_", " ").title(),
+                    command=cmd,
+                    target=dev_id,
+                    param_key="value",
+                    min_value=mn,
+                    max_value=mx,
+                    step=step,
+                    unit=unit,
+                    icon=icon,
+                    **meta,
+                )
+            )
+
     # HeadsetControl peripheral controls
     for peripheral in extract_peripherals(data):
         dev_id = peripheral.get("id", "")

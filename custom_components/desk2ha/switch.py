@@ -93,8 +93,41 @@ async def async_setup_entry(
                 )
             )
 
-    # HeadsetControl LED switches
+    # UVC webcam toggle switches
     from .helpers import extract_peripherals, peripheral_metadata
+
+    _WEBCAM_SWITCHES: dict[str, tuple[str, str]] = {
+        # suffix: (command, icon)
+        "autofocus": ("webcam.set_autofocus", "mdi:camera-enhance"),
+        "auto_wb": ("webcam.set_auto_wb", "mdi:white-balance-auto"),
+        "auto_exposure": ("webcam.set_auto_exposure", "mdi:camera-iris"),
+    }
+
+    for peripheral in extract_peripherals(coordinator.data or {}):
+        dev_id = peripheral.get("id", "")
+        if not dev_id.startswith("peripheral.webcam_"):
+            continue
+        meta = peripheral_metadata(peripheral, coordinator.device_key)
+        if not meta:
+            continue
+        for suffix, (cmd, icon) in _WEBCAM_SWITCHES.items():
+            if suffix not in peripheral:
+                continue
+            entities.append(
+                Desk2HASwitch(
+                    coordinator=coordinator,
+                    metric_key=f"{dev_id}.{suffix}",
+                    name=suffix.replace("_", " ").title(),
+                    command_on=cmd,
+                    command_off=cmd,
+                    target=dev_id,
+                    param_key="value",
+                    icon=icon,
+                    **meta,
+                )
+            )
+
+    # HeadsetControl LED switches
 
     for peripheral in extract_peripherals(coordinator.data or {}):
         dev_id = peripheral.get("id", "")
