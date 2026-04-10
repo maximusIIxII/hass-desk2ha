@@ -3,6 +3,19 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.8.7] - 2026-04-10
+
+### ✨ New features
+- **Restart button**: OS reboot via `system.restart` command
+- **Hibernate button**: System hibernate via `system.hibernate` command
+- **High CPU Temperature Alert blueprint**: Notification when CPU exceeds threshold (default 90°C, 2 min sustained)
+- **Disk Space Low Alert blueprint**: Notification when disk usage exceeds threshold (default 90%)
+- **High RAM Usage Alert blueprint**: Notification when RAM exceeds threshold (default 90%, 5 min sustained)
+
+### 📖 Documentation
+- **Blueprints section** added to README with all 7 automation blueprints
+- Updated upcoming features (removed Energy Dashboard, added HACS PR status)
+
 ## [0.8.6] - 2026-04-09
 
 ### 🔧 Improvements
