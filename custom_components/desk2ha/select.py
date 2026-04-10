@@ -64,6 +64,28 @@ DISPLAY_SELECT_DEFS: list[SelectDef] = [
         ["off", "pbp"],
         "mdi:monitor-multiple",
     ),
+    SelectDef(
+        "color_preset",
+        "Display {idx} Color Preset",
+        "display.set_color_preset",
+        "preset",
+        [
+            "sRGB",
+            "native",
+            "4000K",
+            "5000K",
+            "6500K",
+            "7500K",
+            "8200K",
+            "9300K",
+            "10000K",
+            "11500K",
+            "user1",
+            "user2",
+            "user3",
+        ],
+        "mdi:palette",
+    ),
 ]
 
 

@@ -14,6 +14,7 @@ import pytest
 
 from custom_components.desk2ha.button import (
     Desk2HACommandButton,
+    Desk2HADisplayCommandButton,
     Desk2HARefreshButton,
     Desk2HARestartButton,
 )
@@ -42,6 +43,7 @@ _ACTION_ENTITY_CLASSES = [
     Desk2HARefreshButton,
     Desk2HARestartButton,
     Desk2HACommandButton,
+    Desk2HADisplayCommandButton,
     Desk2HAUpdateEntity,
 ]
 

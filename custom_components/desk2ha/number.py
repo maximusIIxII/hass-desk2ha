@@ -70,6 +70,17 @@ DISPLAY_NUMBER_DEFS: list[NumberDef] = [
         "%",
         "mdi:volume-high",
     ),
+    NumberDef(
+        "sharpness",
+        "Display {idx} Sharpness",
+        "display.set_sharpness",
+        "value",
+        0,
+        100,
+        1,
+        "%",
+        "mdi:blur",
+    ),
 ]
 
 

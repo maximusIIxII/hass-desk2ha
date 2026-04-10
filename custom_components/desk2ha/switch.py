@@ -49,6 +49,14 @@ DISPLAY_SWITCH_DEFS: list[SwitchDef] = [
         "value",
         "mdi:palette",
     ),
+    SwitchDef(
+        "audio_mute",
+        "Display {idx} Audio Mute",
+        "display.set_audio_mute",
+        "display.set_audio_mute",
+        "mute",
+        "mdi:volume-off",
+    ),
 ]
 
 
