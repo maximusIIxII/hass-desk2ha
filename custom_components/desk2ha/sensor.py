@@ -262,6 +262,14 @@ _SUFFIX_ENRICHMENT: dict[str, dict[str, Any]] = {
     },
     "battery_state": {"icon": "mdi:battery-charging"},
     "device_type": {"icon": "mdi:devices", "diagnostic": True},
+    # Display diagnostic sensors (DDC/CI)
+    "usage_hours": {
+        "icon": "mdi:clock-outline",
+        "unit": "h",
+        "state_class": "total_increasing",
+        "diagnostic": True,
+    },
+    "firmware_version": {"icon": "mdi:chip", "diagnostic": True},
 }
 
 # Metric keys to skip as sensors (handled by other platforms)
@@ -285,6 +293,9 @@ _DISPLAY_CONTROL_KEYS = {
     "pbp_mode",
     "auto_brightness",
     "auto_color_temp",
+    "color_preset",
+    "sharpness",
+    "audio_mute",
 }
 
 

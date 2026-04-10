@@ -49,6 +49,14 @@ DISPLAY_SWITCH_DEFS: list[SwitchDef] = [
         "value",
         "mdi:palette",
     ),
+    SwitchDef(
+        "audio_mute",
+        "Display {idx} Audio Mute",
+        "display.set_audio_mute",
+        "display.set_audio_mute",
+        "mute",
+        "mdi:volume-off",
+    ),
 ]
 
 
@@ -84,6 +92,33 @@ async def async_setup_entry(
                     **meta,
                 )
             )
+
+    # HeadsetControl LED switches
+    from .helpers import extract_peripherals, peripheral_metadata
+
+    for peripheral in extract_peripherals(coordinator.data or {}):
+        dev_id = peripheral.get("id", "")
+        if not dev_id.startswith("peripheral.headset_"):
+            continue
+        if "led" not in peripheral:
+            continue
+
+        meta = peripheral_metadata(peripheral, coordinator.device_key)
+        if not meta:
+            continue
+        entities.append(
+            Desk2HASwitch(
+                coordinator=coordinator,
+                metric_key=f"{dev_id}.led",
+                name="LED",
+                command_on="headset.set_led",
+                command_off="headset.set_led",
+                target=dev_id,
+                param_key="enabled",
+                icon="mdi:led-on",
+                **meta,
+            )
+        )
 
     # BLE Scanning switch (system-level, not per-display)
     data = coordinator.data or {}
