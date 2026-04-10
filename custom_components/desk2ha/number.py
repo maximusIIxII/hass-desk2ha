@@ -70,6 +70,17 @@ DISPLAY_NUMBER_DEFS: list[NumberDef] = [
         "%",
         "mdi:volume-high",
     ),
+    NumberDef(
+        "sharpness",
+        "Display {idx} Sharpness",
+        "display.set_sharpness",
+        "value",
+        0,
+        100,
+        1,
+        "%",
+        "mdi:blur",
+    ),
 ]
 
 
@@ -194,6 +205,58 @@ async def async_setup_entry(
                     step=1,
                     unit="%",
                     icon="mdi:keyboard-settings",
+                    sub_device_id=meta.get("sub_device_id", ""),
+                    sub_device_name=meta.get("sub_device_name", ""),
+                    sub_manufacturer=meta.get("sub_manufacturer"),
+                    sub_model=meta.get("sub_model"),
+                )
+            )
+
+    # HeadsetControl peripheral controls
+    for peripheral in extract_peripherals(data):
+        dev_id = peripheral.get("id", "")
+        if not dev_id.startswith("peripheral.headset_"):
+            continue
+
+        meta = peripheral_metadata(peripheral, coordinator.device_key)
+        if not meta:
+            continue
+
+        # Sidetone slider (0-128)
+        if "sidetone" in peripheral:
+            entities.append(
+                Desk2HANumber(
+                    coordinator=coordinator,
+                    metric_key=f"{dev_id}.sidetone",
+                    name="Sidetone",
+                    command="headset.set_sidetone",
+                    target=dev_id,
+                    param_key="value",
+                    min_value=0,
+                    max_value=128,
+                    step=1,
+                    icon="mdi:headphones",
+                    sub_device_id=meta.get("sub_device_id", ""),
+                    sub_device_name=meta.get("sub_device_name", ""),
+                    sub_manufacturer=meta.get("sub_manufacturer"),
+                    sub_model=meta.get("sub_model"),
+                )
+            )
+
+        # Chatmix slider (0-128, 64 = balanced)
+        if "chatmix" in peripheral:
+            entities.append(
+                Desk2HANumber(
+                    coordinator=coordinator,
+                    metric_key=f"{dev_id}.chatmix",
+                    name="Chat Mix",
+                    command="headset.set_chatmix",
+                    target=dev_id,
+                    param_key="value",
+                    min_value=0,
+                    max_value=128,
+                    step=1,
+                    icon="mdi:headphones",
                     sub_device_id=meta.get("sub_device_id", ""),
                     sub_device_name=meta.get("sub_device_name", ""),
                     sub_manufacturer=meta.get("sub_manufacturer"),
