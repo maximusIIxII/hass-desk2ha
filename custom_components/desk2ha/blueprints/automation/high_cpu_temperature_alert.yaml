@@ -1,0 +1,50 @@
+blueprint:
+  name: "Desk2HA: High CPU Temperature Alert"
+  description: >
+    Send a notification when the CPU temperature exceeds a threshold.
+    Useful for detecting thermal throttling or cooling issues.
+  domain: automation
+  input:
+    temperature_sensor:
+      name: CPU Temperature
+      description: The Desk2HA CPU temperature sensor.
+      selector:
+        entity:
+          integration: desk2ha
+          domain: sensor
+          device_class: temperature
+    threshold:
+      name: Temperature Threshold
+      description: Alert when CPU temperature exceeds this value.
+      default: 90
+      selector:
+        number:
+          min: 60
+          max: 105
+          step: 5
+          unit_of_measurement: "°C"
+    notify_service:
+      name: Notification Service
+      description: "The notify service to call (e.g. notify.mobile_app_phone)."
+      default: notify.persistent_notification
+      selector:
+        text:
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input temperature_sensor
+    above: !input threshold
+    for:
+      minutes: 2
+
+condition: []
+
+action:
+  - service: !input notify_service
+    data:
+      title: "Desk2HA: High CPU Temperature"
+      message: >
+        {{ state_attr(trigger.entity_id, 'friendly_name') }} is at
+        {{ states(trigger.entity_id) }}°C. Check cooling and workload.
+
+mode: single

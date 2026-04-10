@@ -1,0 +1,49 @@
+blueprint:
+  name: "Desk2HA: High RAM Usage Alert"
+  description: >
+    Send a notification when RAM usage exceeds a threshold.
+    Indicates the system may be running low on memory.
+  domain: automation
+  input:
+    ram_sensor:
+      name: RAM Usage
+      description: The Desk2HA RAM usage sensor (percentage).
+      selector:
+        entity:
+          integration: desk2ha
+          domain: sensor
+    threshold:
+      name: RAM Usage Threshold
+      description: Alert when RAM usage exceeds this percentage.
+      default: 90
+      selector:
+        number:
+          min: 70
+          max: 99
+          step: 5
+          unit_of_measurement: "%"
+    notify_service:
+      name: Notification Service
+      description: "The notify service to call (e.g. notify.mobile_app_phone)."
+      default: notify.persistent_notification
+      selector:
+        text:
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input ram_sensor
+    above: !input threshold
+    for:
+      minutes: 5
+
+condition: []
+
+action:
+  - service: !input notify_service
+    data:
+      title: "Desk2HA: High RAM Usage"
+      message: >
+        {{ state_attr(trigger.entity_id, 'friendly_name') }} is at
+        {{ states(trigger.entity_id) }}%. Close some applications.
+
+mode: single
