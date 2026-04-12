@@ -9,6 +9,8 @@ Multi-vendor desktop monitoring integration for [Home Assistant](https://www.hom
 
 Brings your entire desk — PC, monitors, peripherals — into Home Assistant. Works with the [Desk2HA Agent](https://github.com/maximusIIxII/desk2ha-agent) running on Windows, Linux, or macOS.
 
+**[Getting Started Guide](docs/GETTING_STARTED.md)** | [Architecture](docs/ARCHITECTURE.md) | [Changelog](CHANGELOG.md)
+
 ## Screenshots
 
 ### Dashboard with Desk2HA Card
