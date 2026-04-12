@@ -1,0 +1,42 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your suggestion! We appreciate your feedback.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem does this solve? What are you trying to achieve?
+      placeholder: "I want to control my dock's USB ports from Home Assistant..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like this to work?
+      placeholder: "A switch entity per USB port on the dock, toggling power delivery..."
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - New device/peripheral support
+        - New control/entity
+        - Dashboard/Card improvement
+        - Agent feature
+        - Documentation
+        - Other
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, links, or other context
