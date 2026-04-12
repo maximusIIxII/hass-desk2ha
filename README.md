@@ -28,7 +28,10 @@ Brings your entire desk — PC, monitors, peripherals — into Home Assistant. W
 ## What you get
 
 - **100+ sensors**: CPU, RAM, disk, battery, GPU, thermals, fan speeds, network throughput, WiFi SSID/signal, OS info, uptime, process count
-- **Display controls**: Brightness, volume, input source, power state via DDC/CI (per display)
+- **Display controls**: Brightness, contrast, volume, input source, power state, color preset, sharpness, RGB gain, black level, audio mute, KVM switch, PBP mode via DDC/CI (per display)
+- **Display actions**: Factory reset, factory color reset buttons (per display)
+- **Webcam controls**: 13 number entities (brightness, contrast, saturation, sharpness, gain, gamma, zoom, focus, exposure, white balance, pan, tilt, backlight compensation) + 3 switches (autofocus, auto WB, auto exposure) via UVC
+- **Headset controls**: Sidetone level, chat mix, LED toggle via HeadsetControl
 - **Logitech Litra**: Power, brightness, color temperature as HA light entity
 - **Bluetooth peripherals**: Paired BLE + Classic devices with battery levels and connection status
 - **Peripheral detection**: USB devices with VID:PID identification (Dell, Logitech, Jabra, Corsair, SteelSeries, Razer)
@@ -85,12 +88,12 @@ Choose "Install agent on remote machine". The integration scans your LAN for rea
 |----------|---------|
 | **Sensor** | CPU Usage, RAM, Battery Level, GPU Model, Fan Speed, WiFi SSID, Network Throughput |
 | **Binary Sensor** | Lid Open, On AC Power |
-| **Number** | Display Brightness, Volume, Keyboard Backlight, Mouse DPI |
-| **Select** | Display Input Source, Power State, Thermal Profile, Battery Charge Mode |
-| **Switch** | Auto Brightness, Auto Color Temperature, BLE Scanning |
+| **Number** | Display Brightness, Contrast, Volume, Sharpness, RGB Gain, Black Level, Keyboard Backlight, Mouse DPI, Webcam Controls (13), Headset Sidetone, Chat Mix |
+| **Select** | Display Input Source, Power State, Color Preset, KVM Switch, PBP Mode, Thermal Profile, Battery Charge Mode |
+| **Switch** | Auto Brightness, Auto Color Temperature, Audio Mute, Headset LED, Webcam Autofocus/Auto WB/Auto Exposure, BLE Scanning |
+| **Button** | Refresh Data, Restart Agent, Lock Screen, Sleep, Shutdown, Restart, Hibernate, Factory Reset, Factory Color Reset |
 | **Light** | Display Brightness (dimmable), Logitech Litra (brightness + color temp) |
 | **Media Player** | Display Speaker Volume |
-| **Button** | Refresh Data, Restart Agent, Lock Screen, Sleep, Shutdown, Restart, Hibernate |
 | **Update** | Agent version check + install |
 
 ## Services
@@ -159,9 +162,9 @@ The card shows system gauges (CPU, RAM, disk, WiFi), thermals, battery status, a
 
 ## Upcoming Features
 
+- **Multi-host device tracking**: Peripheral follows user across machines via global device ID ([design doc](https://github.com/maximusIIxII/desk2ha-agent/blob/main/docs/feinkonzept/12-multi-host-tracking.md))
+- **Fleet management policies**: Centralized configuration and compliance rules ([design doc](https://github.com/maximusIIxII/desk2ha-agent/blob/main/docs/feinkonzept/13-fleet-management-policies.md))
 - **USB PD Dock Monitoring**: Thunderbolt/USB4-specific metrics for docking stations
-- **Multi-host device tracking**: Device follows user across machines
-- **Fleet management policies**: Centralized configuration and compliance rules
 - **HACS Default Repository**: Approval pending (PR #6850)
 
 ## License
