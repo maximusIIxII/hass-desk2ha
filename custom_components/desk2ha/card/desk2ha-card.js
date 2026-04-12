@@ -183,8 +183,8 @@ class Desk2HACard extends HTMLElement {
     const cpuUsage = this._findScopedEntity("cpu_usage");
     const ramUsage = this._findScopedEntity("ram_usage");
     const diskUsage = this._findScopedEntity("disk_usage");
-    const cpuTemp = this._findScopedEntity("cpu_temperature");
-    const gpuTemp = this._findScopedEntity("gpu_temperature");
+    const cpuTemp = this._findScopedEntity("cpu_temperature") || this._findScopedEntity("thermals_cpu_package");
+    const gpuTemp = this._findScopedEntity("gpu_temperature") || this._findScopedEntity("thermals_gpu");
     const batteryLevel = this._findScopedEntity("battery_level");
     const batteryState = this._findScopedEntity("on_ac_power");
     const wifiSignal = this._findScopedEntity("wifi_signal");
@@ -231,8 +231,8 @@ class Desk2HACard extends HTMLElement {
       if (gpuTemp) html += this._statItem("GPU", this._val(gpuTemp), "°C", "mdi:thermometer", this._tempColor(this._val(gpuTemp)));
 
       // Fans
-      const cpuFan = this._findScopedEntity("cpu_fan_speed");
-      const gpuFan = this._findScopedEntity("gpu_fan_speed");
+      const cpuFan = this._findScopedEntity("cpu_fan_speed") || this._findScopedEntity("thermals_fan_cpu");
+      const gpuFan = this._findScopedEntity("gpu_fan_speed") || this._findScopedEntity("thermals_fan_gpu");
       if (cpuFan) html += this._statItem("CPU Fan", this._val(cpuFan), "/min", "mdi:fan");
       if (gpuFan) html += this._statItem("GPU Fan", this._val(gpuFan), "/min", "mdi:fan");
       html += `</div>`;
@@ -281,17 +281,11 @@ class Desk2HACard extends HTMLElement {
 
     // Bind click handlers — open device popup
     this.querySelectorAll(".d2h-clickable").forEach((el) => {
-      el.addEventListener("click", () => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
         const deviceId = el.dataset.device;
         if (deviceId) this._showDevicePopup(deviceId);
       });
-    });
-
-    // Close popup on backdrop click
-    this.addEventListener("click", (e) => {
-      if (e.target.classList.contains("d2h-popup-backdrop")) {
-        this._closePopup();
-      }
     });
   }
 
@@ -555,8 +549,18 @@ class Desk2HACard extends HTMLElement {
     container.innerHTML = popup;
     this.appendChild(container);
 
-    // Bind close
-    this.querySelector("#d2h-popup-close")?.addEventListener("click", () => this._closePopup());
+    // Bind close button
+    this.querySelector("#d2h-popup-close")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this._closePopup();
+    });
+
+    // Bind backdrop click (click on backdrop but not on the popup itself)
+    container.querySelector(".d2h-popup-backdrop")?.addEventListener("click", (e) => {
+      if (e.target.classList.contains("d2h-popup-backdrop")) {
+        this._closePopup();
+      }
+    });
 
     // Bind controls
     this._bindPopupControls();

@@ -70,9 +70,15 @@ auth_token = "PASTE_YOUR_GENERATED_TOKEN_HERE"
 
 That's it for a basic setup. The agent auto-detects everything else.
 
-### Full config (optional)
+### Alternative: MQTT transport (optional)
 
-For MQTT, custom intervals, or disabling collectors, see the
+If your agent can't accept incoming connections (e.g., behind NAT or strict firewall),
+you can use MQTT instead of HTTP. See the [MQTT Setup Guide](MQTT_SETUP.md) for
+full instructions.
+
+### Full config reference
+
+For custom intervals, disabling collectors, or advanced options, see the
 [full config example](https://github.com/maximusIIxII/desk2ha-agent/blob/main/examples/full-config.toml).
 
 ## Step 3: Start the Agent
@@ -97,6 +103,31 @@ Verify the agent is running:
 ```bash
 curl -H "Authorization: Bearer PASTE_YOUR_GENERATED_TOKEN_HERE" http://localhost:9693/v1/health
 ```
+
+### Open the Firewall (Windows)
+
+Windows Firewall blocks incoming connections by default. You **must** allow port 9693:
+
+```powershell
+# Run as Administrator
+netsh advfirewall firewall add rule name="Desk2HA Agent" dir=in action=allow protocol=TCP localport=9693
+```
+
+Or via Windows Settings: **Windows Security** > **Firewall** > **Advanced Settings** > **Inbound Rules** > **New Rule** > Port 9693 TCP > Allow.
+
+### Verify Connectivity
+
+Before configuring HA, test that the agent is reachable from your network:
+
+```bash
+# From any other machine on the same network (or from HA terminal)
+curl -H "Authorization: Bearer YOUR_TOKEN" http://YOUR_PC_IP:9693/v1/health
+```
+
+You should get `{"status": "ok"}`. If not:
+- **Connection refused**: Agent not running or firewall blocking port 9693
+- **401 Unauthorized**: Token mismatch — check `auth_token` in config.toml
+- **Timeout**: Wrong IP or machines not on the same network
 
 ### Autostart
 
@@ -273,9 +304,14 @@ Minor version differences are compatible. Check the
 
 ### Integration can't connect
 
-- **Firewall**: Ensure port 9693 is open on the agent PC
-- **Wrong token**: The token in HA must match `auth_token` in config.toml exactly
-- **Different network**: Agent and HA must be on the same network (or have routing)
+This is the most common setup issue. Check in order:
+
+1. **Agent running?** Open `http://localhost:9693/v1/health` in the browser on the agent PC. Must return `{"status": "ok"}`
+2. **Firewall?** Windows Firewall blocks port 9693 by default. See [Open the Firewall](#open-the-firewall-windows) above
+3. **Reachable from HA?** From the HA terminal (or another PC): `curl http://YOUR_PC_IP:9693/v1/health` — must not timeout
+4. **Token correct?** The token in HA must match `auth_token` in config.toml **exactly** (no extra spaces)
+5. **Same network?** Agent PC and HA must be on the same subnet (or have routing/VLAN configured)
+6. **MQTT not required**: HTTP with bearer token is the default transport. MQTT is optional for advanced setups
 
 ### No display controls
 
