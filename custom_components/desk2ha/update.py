@@ -45,6 +45,7 @@ class Desk2HAUpdateEntity(Desk2HAEntity, UpdateEntity):
     def __init__(self, coordinator: Desk2HACoordinator) -> None:
         super().__init__(coordinator, "agent_update", "Agent Update")
         self._update_info: dict[str, Any] = {}
+        self._attr_entity_picture = f"/{DOMAIN}/brand/icon.png"
 
     @property
     def installed_version(self) -> str | None:
@@ -55,7 +56,7 @@ class Desk2HAUpdateEntity(Desk2HAEntity, UpdateEntity):
 
     @property
     def latest_version(self) -> str | None:
-        return self._update_info.get("latest_version", self.installed_version)
+        return self._update_info.get("latest_version")
 
     @property
     def release_url(self) -> str | None:

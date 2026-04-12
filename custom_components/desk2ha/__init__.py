@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 CARD_JS = Path(__file__).parent / "card" / "desk2ha-card.js"
 CARD_URL_PATH = f"/{DOMAIN}/desk2ha-card.js"
+BRAND_ICON = Path(__file__).parent / "brand" / "icon.png"
+BRAND_ICON_URL = f"/{DOMAIN}/brand/icon.png"
 
 # unique_id patterns from v0.1.0-S1 that no longer match active entities.
 _ORPHANED_UNIQUE_IDS = {
@@ -151,14 +153,17 @@ def _register_image_server(hass: HomeAssistant) -> None:
 
 
 async def _register_card(hass: HomeAssistant) -> None:
-    """Serve the Lovelace card JS file via HA's HTTP server."""
-    if CARD_JS.is_file():
-        from homeassistant.components.http import StaticPathConfig
+    """Serve the Lovelace card JS file and brand icon via HA's HTTP server."""
+    from homeassistant.components.http import StaticPathConfig
 
-        await hass.http.async_register_static_paths(
-            [StaticPathConfig(CARD_URL_PATH, str(CARD_JS), cache_headers=False)]
-        )
+    paths: list[StaticPathConfig] = []
+    if CARD_JS.is_file():
+        paths.append(StaticPathConfig(CARD_URL_PATH, str(CARD_JS), cache_headers=False))
         logger.info("Registered Lovelace card at %s", CARD_URL_PATH)
+    if BRAND_ICON.is_file():
+        paths.append(StaticPathConfig(BRAND_ICON_URL, str(BRAND_ICON), cache_headers=True))
+    if paths:
+        await hass.http.async_register_static_paths(paths)
 
 
 def _cleanup_orphaned_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
