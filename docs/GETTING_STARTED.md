@@ -65,8 +65,12 @@ on Windows or `~/desk2ha/config.toml` on Linux/macOS):
 ```toml
 [http]
 enabled = true
+bind = "0.0.0.0"
 auth_token = "PASTE_YOUR_GENERATED_TOKEN_HERE"
 ```
+
+> **Important:** `bind = "0.0.0.0"` makes the agent reachable from your network.
+> Without it, the agent only listens on localhost and HA cannot connect.
 
 That's it for a basic setup. The agent auto-detects everything else.
 
