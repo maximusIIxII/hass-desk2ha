@@ -1,0 +1,95 @@
+name: Bug Report
+description: Something isn't working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please fill in as much detail as possible.
+
+  - type: input
+    id: version_integration
+    attributes:
+      label: Integration version
+      description: "Settings > Devices > Desk2HA > Version"
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: version_agent
+    attributes:
+      label: Agent version
+      description: "Agent Version sensor in HA, or: curl http://AGENT:9693/v1/health"
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2025.4.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Agent OS
+      options:
+        - Windows 10
+        - Windows 11
+        - Ubuntu / Debian
+        - Fedora / RHEL
+        - macOS
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Clear description of the bug
+      placeholder: "When I click on the monitor in the card, the wrong popup opens..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      placeholder: "The monitor control popup should open with brightness/contrast sliders."
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Desk2HA dashboard
+        2. Click on U5226KW
+        3. See webcam popup instead of monitor popup
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: "Agent logs, HA logs (Settings > System > Logs), or browser console errors"
+      render: shell
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: "Optional: Download from Settings > Devices > Desk2HA > your device > Diagnostics"
+      render: json
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have checked that the agent is running and reachable
+        - label: I have restarted Home Assistant after updating
+        - label: I have cleared the browser cache (Ctrl+Shift+R)

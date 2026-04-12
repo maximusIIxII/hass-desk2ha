@@ -1,46 +1,54 @@
-# Contributing to Desk2HA Integration
+# Contributing to Desk2HA
 
-Thanks for your interest in contributing!
+Thanks for helping improve Desk2HA! Here's how you can contribute.
 
-## Setup
+## Reporting Bugs
 
-```bash
-git clone https://github.com/maximusIIxII/hass-desk2ha.git
-cd hass-desk2ha
-pip install pytest pytest-asyncio aiohttp ruff pre-commit
-pre-commit install
-```
+1. **Check existing issues** — your problem may already be reported
+2. **Use the bug report template** — [New Bug Report](https://github.com/maximusIIxII/hass-desk2ha/issues/new?template=bug_report.yml)
+3. **Include versions** — Integration version, Agent version, HA version, OS
+4. **Include logs** — Agent console output, HA logs (Settings > System > Logs)
+5. **Include diagnostics** — Settings > Devices > Desk2HA > your device > Download Diagnostics
 
-## Before submitting a PR
+## Requesting Features
 
-Run these checks locally:
+Use the [Feature Request template](https://github.com/maximusIIxII/hass-desk2ha/issues/new?template=feature_request.yml). Describe the problem you're solving, not just the solution you want.
 
-```bash
-ruff check custom_components/desk2ha/ tests/
-ruff format custom_components/desk2ha/ tests/
-pytest tests/ -x --tb=short
-```
+## Asking Questions
 
-## Commit guidelines
+Use [GitHub Discussions](https://github.com/maximusIIxII/hass-desk2ha/discussions) for:
+- Setup help and troubleshooting
+- Sharing your dashboard/automation setups
+- General feedback and ideas
 
-- Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `ci:`, `test:`, `chore:`
-- Update `CHANGELOG.md` under `[Unreleased]` with emoji categories
-- For user-facing changes, update `README.md`
+## Testing a Pre-Release
 
-## Adding a new entity platform
+1. Install the latest main branch via HACS (or manual copy)
+2. Update the agent: `pip install --upgrade desk2ha-agent`
+3. Test your specific hardware setup
+4. Report any issues with the bug template
 
-1. Create `custom_components/desk2ha/{platform}.py`
-2. Implement `async_setup_entry()` following HA patterns
-3. Add platform to `PLATFORMS` in `const.py`
-4. Add UI strings in `strings.json` and `translations/`
-5. Add tests if pure-Python logic is involved
+### What to test
 
-## Reporting bugs
+- [ ] Agent starts and connects to HA
+- [ ] All your peripherals appear as devices
+- [ ] Display controls work (brightness, input source, etc.)
+- [ ] Webcam controls work (if applicable)
+- [ ] BT peripherals show battery levels
+- [ ] Lovelace card renders correctly
+- [ ] Card popup shows correct controls per device
+- [ ] Health check service runs without errors
 
-1. Check existing issues first
-2. Include: integration version, HA version, agent version
-3. Attach diagnostics: **Settings** → **Integrations** → **Desk2HA** → **Diagnostics**
+## Submitting Code
 
-## License
+1. Fork the repo
+2. Create a feature branch (`feat/my-feature`)
+3. Run `ruff check` and `ruff format` before committing
+4. Write tests for new functionality
+5. Submit a PR with a clear description
 
-By contributing, you agree that your contributions are licensed under the Apache-2.0 License.
+## Code Style
+
+- Python: `ruff` for linting and formatting (config in `pyproject.toml`)
+- JavaScript: Standard ES6, no build step
+- Commit messages: `feat:`, `fix:`, `docs:`, `style:`, `test:`, `chore:`
