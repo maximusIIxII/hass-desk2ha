@@ -3,6 +3,35 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [1.0.0] - 2026-04-12
+
+### ✨ New features
+- **Lovelace Card v1.1**: Auto-discovery (no entity config needed), device list with MDI icons, control popup with inline sliders/toggles/dropdowns/buttons, SVG product images in popup header
+- **Device Health Check service** (`desk2ha.device_health_check`): 7 automated checks — stale devices, orphan entities, missing manufacturers, duplicate names. Auto-fix mode + persistent notification with results
+- **Device Registry Auto-Sync**: Automatically updates device names and manufacturers when agent reports better metadata
+- **Product Image serving**: `/desk2ha/images/{device_key}` endpoint with Tier 3 cache (vendor photos) + Tier 1/2 SVG proxy from agent
+- **Per-device-type SVG icons**: Webcam, keyboard, mouse, headset, dock, speaker, light, monitor — each with distinct icon
+- **BT manufacturer enrichment**: 37 name patterns (Dell, Jabra, Logitech, Bose, Sony, etc.) auto-detect manufacturer from device name
+- **Webcam name resolution**: Camera names resolved from OS APIs (WMI, sysfs, system_profiler) instead of raw index IDs
+
+### 🐛 Bug fixes
+- **Disconnected BT devices hidden**: Paired-but-not-connected Bluetooth devices no longer appear as HA devices
+- **USB error devices filtered**: "Unbekanntes USB-Geraet" / descriptor failures no longer create entities
+- **Scanner/printer filter**: HP OfficeJet and other scanners no longer detected as webcams by UVC collector
+- **Orphan entity cleanup**: Disabled entities are deleted (not accumulated) on startup. Stale entity patterns removed
+- **Host device rename prevented**: Health check no longer strips manufacturer prefix from host device name
+
+### 📚 Documentation
+- **Getting Started Guide**: Complete zero-to-working walkthrough (Prerequisites, Agent install, Config, Autostart for Win/Linux/macOS, HA setup, Card, Updating, Troubleshooting)
+- **Architecture diagram**: System overview, data flow, device hierarchy, API contract, security model
+- **Improved error messages**: Config flow errors now include specific troubleshooting steps
+
+### 🔒 Security
+- Pre-release security scanner (`scripts/security-scan.py`) with git history scanning
+- Git history scrubber (`scripts/scrub-history.ps1`) for removing leaked secrets
+- Pre-push git hook blocks pushes with critical security issues
+- All hardcoded credentials, service tags, and personal data removed
+
 ## [0.9.0] - 2026-04-12
 
 ### ✨ New features
