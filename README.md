@@ -146,6 +146,21 @@ The card shows system gauges (CPU, RAM, disk, WiFi), thermals, battery status, a
 
 > **Note:** Add the card as a dashboard resource: **Settings** > **Dashboards** > **Resources** > Add `/desk2ha/desk2ha-card.js` as JavaScript Module.
 
+## Device Capabilities
+
+| Device Category | Monitoring | Controls | Notes |
+|-----------------|-----------|----------|-------|
+| **System (PC)** | CPU, RAM, Disk, Network, Battery, Thermals | Lock, Sleep, Shutdown, Restart, Hibernate | Thermals require Dell Command Monitor or admin |
+| **Monitors** | Model, Firmware, Usage Hours | Brightness, Contrast, Volume, Input Source, KVM, Color Preset, RGB Gain, Black Level | DDC/CI must be enabled in OSD |
+| **Webcams** | Resolution, FPS | Brightness, Contrast, Zoom, Focus, Pan/Tilt, White Balance, Exposure | Requires `opencv-python` |
+| **Headsets** | Battery, Model, Firmware | Sidetone, Chat Mix, LED | Requires `headsetcontrol` (Linux) |
+| **Keyboards** | Battery (BT), Backlight | Backlight level | Backlight: Dell WMI or Logitech HID++ |
+| **Mice** | Battery (BT), DPI | DPI setting | DPI: Logitech HID++ only |
+| **Docks/Hubs** | Model, VID:PID | — | Monitoring only (no standard control API) |
+| **USB Power Delivery** | Voltage, Charge Rate, Connected | — | Monitoring only (OS read-only interfaces) |
+| **Bluetooth Peripherals** | Battery, Connected, Type | BLE Scan toggle | Only connected devices shown |
+| **Lights (Litra)** | Power, Brightness, Color Temp | On/Off, Brightness, Color Temp | Logitech Litra Glow/Beam |
+
 ## Known Issues
 
 | Issue | Workaround | Status |

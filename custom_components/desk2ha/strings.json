@@ -67,16 +67,16 @@
       }
     },
     "error": {
-      "cannot_connect": "Cannot connect to the Desk2HA agent.",
-      "invalid_auth": "Invalid Bearer token.",
-      "install_failed": "Remote installation failed. Check credentials and ensure Python 3.11+ is installed.",
-      "unknown": "An unexpected error occurred."
+      "cannot_connect": "Cannot connect to the Desk2HA agent. Check that the agent is running on the target machine and port 9693 is accessible. Try: curl http://AGENT_IP:9693/v1/health",
+      "invalid_auth": "Invalid Bearer token. The token must match the auth_token value in the agent's config.toml exactly (case-sensitive).",
+      "install_failed": "Remote installation failed. Verify: (1) credentials are correct, (2) Python 3.11+ is installed on the target, (3) SSH/WinRM is enabled and accessible.",
+      "unknown": "An unexpected error occurred. Check the Home Assistant logs for details (Settings > System > Logs)."
     },
     "abort": {
-      "already_configured": "This device is already configured.",
-      "cannot_connect": "Cannot connect to the discovered agent.",
-      "install_failed": "Remote installation failed.",
-      "install_server_unavailable": "Install server not ready. Please reload the integration first."
+      "already_configured": "This device is already configured. To reconfigure, remove the existing entry first.",
+      "cannot_connect": "Cannot connect to the discovered agent. Ensure it is still running and the firewall allows port 9693.",
+      "install_failed": "Remote installation failed. Check the Home Assistant logs for details.",
+      "install_server_unavailable": "Install server not ready. Please reload the Desk2HA integration (Settings > Devices > Desk2HA > ... > Reload)."
     }
   },
   "options": {
