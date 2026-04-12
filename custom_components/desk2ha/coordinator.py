@@ -12,7 +12,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import CONF_AGENT_TOKEN, CONF_AGENT_URL, CONF_POLL_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import (
+    CONF_AGENT_TOKEN,
+    CONF_AGENT_URL,
+    CONF_POLL_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -178,16 +184,14 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 continue
 
             sub_device_id = f"{device_key}_{dev_id}"
-            device_entry = dev_registry.async_get_device(
-                identifiers={(DOMAIN, sub_device_id)}
-            )
+            device_entry = dev_registry.async_get_device(identifiers={(DOMAIN, sub_device_id)})
             if device_entry is None:
                 continue
 
             # Strip manufacturer prefix to prevent "Dell Dell Webcam WB7022"
             display_name = model
             if mfg and model.lower().startswith(mfg.lower()):
-                display_name = model[len(mfg):].strip() or model
+                display_name = model[len(mfg) :].strip() or model
 
             # Check if device registry needs updating
             needs_update = False

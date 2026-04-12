@@ -3,6 +3,23 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [1.0.1] - 2026-04-12
+
+### 🐛 Bug fixes
+- **Card popup-close**: Fixed backdrop click and X button not reliably closing popups
+- **Card thermal/fan lookup**: Added fallback entity suffixes for correct matching
+- **Update entity**: Fixed false "up to date" status when update check hasn't run yet
+- **Charging/USB-PD**: Moved from sensor (showing "True"/"False") to binary_sensor with proper device classes
+
+### 📖 Documentation
+- **Getting Started**: Added Windows Firewall instructions, bind config, connectivity verification
+- **MQTT Setup Guide**: New standalone guide with Mosquitto setup and troubleshooting
+
+### 🔧 Improvements
+- Brand icon registered as static path for update entity
+- Old charging/USB-PD sensor entities auto-removed on upgrade
+- Pre-commit hook: ruff lint + format + pytest before every commit
+
 ## [1.0.0] - 2026-04-12
 
 ### ✨ New features

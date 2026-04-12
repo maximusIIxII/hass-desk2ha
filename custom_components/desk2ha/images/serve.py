@@ -40,13 +40,7 @@ async def _handle_image_request(request: web.Request) -> web.Response:
     hass: HomeAssistant = request.app["hass"]
 
     # 1. Check local Tier 3 cache
-    cache_dir = (
-        Path(hass.config.config_dir)
-        / "custom_components"
-        / DOMAIN
-        / "images"
-        / "cache"
-    )
+    cache_dir = Path(hass.config.config_dir) / "custom_components" / DOMAIN / "images" / "cache"
     from .cache import ImageCache
 
     cache = ImageCache(cache_dir)
@@ -73,9 +67,7 @@ async def _handle_image_request(request: web.Request) -> web.Response:
         dev_registry = dr.async_get(hass)
         for _dk, coordinator in _get_coordinators(hass).items():
             sub_id = f"{coordinator.device_key}_{device_key}"
-            dev_entry = dev_registry.async_get_device(
-                identifiers={(DOMAIN, sub_id)}
-            )
+            dev_entry = dev_registry.async_get_device(identifiers={(DOMAIN, sub_id)})
             if dev_entry and dev_entry.name:
                 name_lower = dev_entry.name.lower()
                 # Append device type hint to the key for the agent
@@ -100,18 +92,18 @@ async def _handle_image_request(request: web.Request) -> web.Response:
             headers: dict[str, str] = {}
             if coordinator.agent_token:
                 headers["Authorization"] = f"Bearer {coordinator.agent_token}"
-            async with aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=5)
-            ) as session:
-                async with session.get(url, headers=headers) as resp:
-                    if resp.status == 200:
-                        body = await resp.read()
-                        ct = resp.content_type or "image/svg+xml"
-                        return web.Response(
-                            body=body,
-                            content_type=ct,
-                            headers={"Cache-Control": "public, max-age=3600"},
-                        )
+            async with (
+                aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session,
+                session.get(url, headers=headers) as resp,
+            ):
+                if resp.status == 200:
+                    body = await resp.read()
+                    ct = resp.content_type or "image/svg+xml"
+                    return web.Response(
+                        body=body,
+                        content_type=ct,
+                        headers={"Cache-Control": "public, max-age=3600"},
+                    )
         except Exception:
             logger.debug("Agent image proxy failed for %s", device_key, exc_info=True)
 

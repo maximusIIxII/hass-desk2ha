@@ -163,7 +163,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 device_info = {
                     "manufacturer": hw.get("manufacturer", ""),
                     "model": hw.get("model", ""),
-                    "service_tag": identity.get("serial_number", "") or identity.get("service_tag", ""),
+                    "service_tag": (
+                        identity.get("serial_number", "") or identity.get("service_tag", "")
+                    ),
                 }
 
                 url = await resolve_image_url(device_info, session)
@@ -254,12 +256,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             for entity in entities:
                 ent_registry.async_remove(entity.entity_id)
             dev_registry.async_remove_device(device.id)
-            fixed.append({
-                "device_id": device.id,
-                "device_name": device.name or "",
-                "issue": reason,
-                "action": f"removed ({len(entities)} entities)",
-            })
+            fixed.append(
+                {
+                    "device_id": device.id,
+                    "device_name": device.name or "",
+                    "issue": reason,
+                    "action": f"removed ({len(entities)} entities)",
+                }
+            )
 
         # Collect currently reported peripheral IDs from all coordinators
         active_peripheral_ids: set[str] = set()
@@ -269,9 +273,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             data = coordinator.data or {}
             for peripheral in data.get("peripherals", []):
                 if isinstance(peripheral, dict) and peripheral.get("id"):
-                    active_peripheral_ids.add(
-                        f"{coordinator.device_key}_{peripheral['id']}"
-                    )
+                    active_peripheral_ids.add(f"{coordinator.device_key}_{peripheral['id']}")
 
         for _entry_id, coordinator in hass.data.get(DOMAIN, {}).items():
             if not isinstance(coordinator, Desk2HACoordinator):
@@ -281,9 +283,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             if not config_entry:
                 continue
 
-            devices = dr.async_entries_for_config_entry(
-                dev_registry, config_entry.entry_id
-            )
+            devices = dr.async_entries_for_config_entry(dev_registry, config_entry.entry_id)
 
             for device in devices:
                 name = (device.name or "").strip()
@@ -306,12 +306,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
                 # ── Check 2: Missing manufacturer ──
                 if not mfg and device.via_device_id:
-                    issues.append({
-                        "device_id": device.id,
-                        "device_name": name,
-                        "issue": "missing_manufacturer",
-                        "detail": "No manufacturer set on sub-device",
-                    })
+                    issues.append(
+                        {
+                            "device_id": device.id,
+                            "device_name": name,
+                            "issue": "missing_manufacturer",
+                            "detail": "No manufacturer set on sub-device",
+                        }
+                    )
 
                 # ── Check 3: Orphan device with 0 entities ──
                 if entity_count == 0 and device.via_device_id:
@@ -337,15 +339,15 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                     }
                     issues.append(issue)
                     if auto_fix:
-                        clean_name = name[len(mfg):].strip()
+                        clean_name = name[len(mfg) :].strip()
                         if clean_name:
-                            dev_registry.async_update_device(
-                                device.id, name=clean_name
+                            dev_registry.async_update_device(device.id, name=clean_name)
+                            fixed.append(
+                                {
+                                    **issue,
+                                    "action": f"renamed to '{clean_name}'",
+                                }
                             )
-                            fixed.append({
-                                **issue,
-                                "action": f"renamed to '{clean_name}'",
-                            })
 
                 # ── Check 5: Stale device (ALL entities unavailable + not reported) ──
                 if entity_count > 0 and device.via_device_id:
@@ -390,17 +392,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             config_entry2 = coordinator2.config_entry
             if not config_entry2:
                 continue
-            all_entities = er.async_entries_for_config_entry(
-                ent_registry, config_entry2.entry_id
-            )
+            all_entities = er.async_entries_for_config_entry(ent_registry, config_entry2.entry_id)
             for entity in all_entities:
                 should_remove = False
-                reason = ""
 
                 # 7a: Disabled entities — no longer needed, delete them
                 if entity.disabled_by is not None:
                     should_remove = True
-                    reason = "disabled"
 
                 # 7b: Entity whose state is unavailable and not in agent data
                 if not should_remove:
@@ -412,34 +410,42 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                         # Peripheral entities contain the peripheral ID
                         is_orphan_peripheral = False
                         for suffix in (
-                            "hp_officejet", "peripheral_usb_0_", "peripheral_usb_1_",
-                            "peripheral_usb_2_", "peripheral_usb_3_", "peripheral_usb_4_",
-                            "peripheral_usb_5_", "peripheral_receiver_",
+                            "hp_officejet",
+                            "peripheral_usb_0_",
+                            "peripheral_usb_1_",
+                            "peripheral_usb_2_",
+                            "peripheral_usb_3_",
+                            "peripheral_usb_4_",
+                            "peripheral_usb_5_",
+                            "peripheral_receiver_",
                         ):
                             if suffix in uid.lower():
                                 is_orphan_peripheral = True
                                 break
                         if is_orphan_peripheral:
                             should_remove = True
-                            reason = "orphan_unavailable"
 
                 if should_remove and auto_fix:
                     ent_registry.async_remove(entity.entity_id)
                     disabled_removed += 1
 
         if disabled_removed:
-            issues.append({
-                "device_id": "",
-                "device_name": "",
-                "issue": "disabled_or_orphan_entities_cleaned",
-                "detail": f"Removed {disabled_removed} disabled/orphaned entities",
-            })
-            fixed.append({
-                "device_id": "",
-                "device_name": "",
-                "issue": "disabled_or_orphan_entities_cleaned",
-                "action": f"deleted {disabled_removed} entities",
-            })
+            issues.append(
+                {
+                    "device_id": "",
+                    "device_name": "",
+                    "issue": "disabled_or_orphan_entities_cleaned",
+                    "detail": f"Removed {disabled_removed} disabled/orphaned entities",
+                }
+            )
+            fixed.append(
+                {
+                    "device_id": "",
+                    "device_name": "",
+                    "issue": "disabled_or_orphan_entities_cleaned",
+                    "action": f"deleted {disabled_removed} entities",
+                }
+            )
             logger.info("Cleaned up %d disabled/orphaned entities", disabled_removed)
 
         report = {
@@ -465,17 +471,20 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                     f"- {f_item.get('device_name', '?')}: "
                     f"{f_item.get('action', f_item.get('issue', ''))}"
                 )
-        remaining = [i for i in issues if not any(
-            f_item.get("device_id") == i.get("device_id")
-            and f_item.get("issue") == i.get("issue")
-            for f_item in fixed
-        )]
+        remaining = [
+            i
+            for i in issues
+            if not any(
+                f_item.get("device_id") == i.get("device_id")
+                and f_item.get("issue") == i.get("issue")
+                for f_item in fixed
+            )
+        ]
         if remaining:
             lines.append(f"\n**{len(remaining)} issue(s) require attention:**")
             for item in remaining:
-                lines.append(
-                    f"- **{item.get('device_name', '?')}**: {item.get('detail', item.get('issue', ''))}"
-                )
+                detail = item.get("detail", item.get("issue", ""))
+                lines.append(f"- **{item.get('device_name', '?')}**: {detail}")
         if not issues:
             lines.append("All devices and entities are healthy.")
 
