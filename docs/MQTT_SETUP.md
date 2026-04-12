@@ -57,7 +57,7 @@ enabled = false
 
 [mqtt]
 enabled = true
-broker = "YOUR_HA_IP"       # e.g., "192.168.1.x"
+broker = "YOUR_HA_IP"       # e.g., "192.168.1.100"
 port = 1883
 username = "mqttuser"
 password = "your_secure_password"
