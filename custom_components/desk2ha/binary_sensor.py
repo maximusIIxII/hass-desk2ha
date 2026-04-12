@@ -42,6 +42,17 @@ def _battery_is_on_ac(val: Any) -> bool | None:
     return bool(val)
 
 
+def _truthy(val: Any) -> bool | None:
+    """Return True for truthy values (True, 'true', 'True', 1)."""
+    if val is None:
+        return None
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, str):
+        return val.lower() in ("true", "1", "yes", "on")
+    return bool(val)
+
+
 BINARY_SENSOR_DEFS: list[BinarySensorDef] = [
     BinarySensorDef(
         name="On AC Power",
@@ -57,12 +68,28 @@ BINARY_SENSOR_DEFS: list[BinarySensorDef] = [
         icon="mdi:laptop",
         is_on_fn=lambda v: bool(v) if v is not None else None,
     ),
+    BinarySensorDef(
+        name="Charging",
+        metric_key="power.charging",
+        device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
+        icon="mdi:battery-charging",
+        is_on_fn=_truthy,
+    ),
+    BinarySensorDef(
+        name="USB PD Connected",
+        metric_key="power.usb_pd_connected",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        icon="mdi:usb-port",
+        is_on_fn=_truthy,
+    ),
 ]
 
 # Map metric_key -> required data key to check existence
 _EXISTENCE_CHECKS: dict[str, str] = {
     "battery.state": "battery",
     "system.lid_open": "system",
+    "power.charging": "power",
+    "power.usb_pd_connected": "power",
 }
 
 

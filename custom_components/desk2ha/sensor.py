@@ -174,8 +174,8 @@ KNOWN_SENSORS: dict[str, SensorDef] = {
         "Power Consumption", SensorDeviceClass.POWER, "W", "measurement"
     ),
     "power.source": SensorDef("Power Source", icon="mdi:power-plug"),
-    "power.usb_pd_connected": SensorDef("USB PD Connected", icon="mdi:usb-port"),
-    "power.charging": SensorDef("Charging", icon="mdi:battery-charging"),
+    # power.usb_pd_connected → binary_sensor (since v1.0.1)
+    # power.charging → binary_sensor (since v1.0.1)
     "power.design_voltage": SensorDef(
         "Design Voltage", SensorDeviceClass.VOLTAGE, "V", "measurement", "mdi:flash"
     ),
@@ -280,6 +280,8 @@ _SKIP_KEYS = {
     "snapshot_timestamp",
     "system.lid_open",  # binary_sensor
     "battery.state",  # binary_sensor (On AC Power)
+    "power.charging",  # binary_sensor (since v1.0.1)
+    "power.usb_pd_connected",  # binary_sensor (since v1.0.1)
 }
 
 # Display metrics handled by number/select/switch platforms (skip as sensors)
