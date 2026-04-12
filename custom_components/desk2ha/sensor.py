@@ -298,6 +298,26 @@ _DISPLAY_CONTROL_KEYS = {
     "audio_mute",
 }
 
+# Webcam metrics handled by number/switch platforms (skip as sensors)
+_WEBCAM_CONTROL_KEYS = {
+    "brightness",
+    "contrast",
+    "saturation",
+    "sharpness",
+    "gain",
+    "gamma",
+    "zoom",
+    "focus",
+    "exposure",
+    "white_balance",
+    "pan",
+    "tilt",
+    "backlight_compensation",
+    "autofocus",
+    "auto_wb",
+    "auto_exposure",
+}
+
 
 def _flatten_metrics(data: dict[str, Any]) -> dict[str, Any]:
     """Flatten the nested /v1/metrics response into dot-separated keys."""
@@ -377,6 +397,8 @@ async def async_setup_entry(
             continue
         key_suffix = metric_key.rsplit(".", 1)[-1] if "." in metric_key else metric_key
         if metric_key.startswith("display.") and key_suffix in _DISPLAY_CONTROL_KEYS:
+            continue
+        if metric_key.startswith("peripheral.webcam_") and key_suffix in _WEBCAM_CONTROL_KEYS:
             continue
 
         # Determine sub-device (display.0.xxx → display.0, peripheral.usb_3.xxx → peripheral.usb_3)

@@ -3,6 +3,25 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [0.9.0] - 2026-04-12
+
+### ✨ New features
+- **Color Preset select**: sRGB, native, 4000K–11500K, user1–3 per display
+- **Sharpness number**: 0–100% per display via DDC/CI
+- **RGB Gain numbers**: Red, Green, Blue gain (0–100%) per display
+- **Black Level numbers**: Red, Green, Blue black level (0–100%) per display
+- **Audio Mute switch**: Per-display audio mute toggle
+- **Usage Hours sensor**: Display operating hours (diagnostic)
+- **Firmware Version sensor**: Display firmware level (diagnostic)
+- **Factory Reset buttons**: Per-display factory reset + factory color reset (config category)
+- **Sidetone number**: Headset sidetone level (0–128) via HeadsetControl
+- **Chat Mix number**: Headset chat/game balance (0–128) via HeadsetControl
+- **Headset LED switch**: Toggle headset LED via HeadsetControl
+- **UVC webcam controls**: 13 number entities (brightness, contrast, saturation, sharpness, gain, gamma, zoom, focus, exposure, white balance, pan, tilt, backlight compensation) + 3 switch entities (autofocus, auto white balance, auto exposure)
+
+### 🐛 Bug fixes
+- **Webcam sensor duplicates**: Webcam control metrics no longer create duplicate sensor entities — excluded via `_WEBCAM_CONTROL_KEYS` (analogous to display controls)
+
 ## [0.8.7] - 2026-04-10
 
 ### ✨ New features

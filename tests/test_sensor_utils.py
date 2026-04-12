@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from custom_components.desk2ha.sensor import (
+    _DISPLAY_CONTROL_KEYS,
+    _WEBCAM_CONTROL_KEYS,
     KNOWN_SENSORS,
     _flatten_metrics,
     _make_name,
@@ -91,3 +93,68 @@ def test_known_sensors_diagnostic_flag():
     assert KNOWN_SENSORS["system.cpu_model"].diagnostic is True
     assert KNOWN_SENSORS["agent.version"].diagnostic is True
     assert KNOWN_SENSORS["system.cpu_usage_percent"].diagnostic is False
+
+
+# ---------------------------------------------------------------------------
+# Sensor-exclusion sets: display controls & webcam controls
+# ---------------------------------------------------------------------------
+
+
+def test_display_control_keys_excludes_known_controls():
+    """Display metrics handled by number/select/switch must be in the exclusion set."""
+    expected = {
+        "brightness_percent",
+        "contrast_percent",
+        "volume",
+        "input_source",
+        "color_preset",
+        "sharpness",
+        "audio_mute",
+    }
+    assert expected.issubset(_DISPLAY_CONTROL_KEYS)
+
+
+def test_webcam_control_keys_matches_number_and_switch():
+    """Every webcam number/switch suffix must appear in _WEBCAM_CONTROL_KEYS."""
+    number_suffixes = {
+        "brightness",
+        "contrast",
+        "saturation",
+        "sharpness",
+        "gain",
+        "gamma",
+        "zoom",
+        "focus",
+        "exposure",
+        "white_balance",
+        "pan",
+        "tilt",
+        "backlight_compensation",
+    }
+    switch_suffixes = {"autofocus", "auto_wb", "auto_exposure"}
+    assert number_suffixes.issubset(_WEBCAM_CONTROL_KEYS)
+    assert switch_suffixes.issubset(_WEBCAM_CONTROL_KEYS)
+
+
+def test_webcam_control_keys_would_filter_sensor(monkeypatch):
+    """Webcam control metrics must be skipped during sensor entity creation.
+
+    Simulates the filter logic from async_setup_entry to ensure
+    peripheral.webcam_* metrics with control suffixes are excluded.
+    """
+    webcam_metrics = {f"peripheral.webcam_0.{suffix}": 42 for suffix in _WEBCAM_CONTROL_KEYS}
+    # Add a non-control webcam metric that SHOULD pass through
+    webcam_metrics["peripheral.webcam_0.resolution"] = "1920x1080"
+
+    skipped = []
+    passed = []
+    for metric_key in webcam_metrics:
+        key_suffix = metric_key.rsplit(".", 1)[-1]
+        if metric_key.startswith("peripheral.webcam_") and key_suffix in _WEBCAM_CONTROL_KEYS:
+            skipped.append(metric_key)
+        else:
+            passed.append(metric_key)
+
+    assert len(skipped) == len(_WEBCAM_CONTROL_KEYS)
+    assert "peripheral.webcam_0.resolution" in passed
+    assert all("peripheral.webcam_0." in k for k in skipped)
