@@ -206,6 +206,8 @@ For remote machines without direct network access:
 After setup, go to **Settings** > **Devices & Services** > **Desk2HA**.
 You should see your PC with all detected peripherals:
 
+![Connected Devices](screenshots/devices.png)
+
 - System sensors (CPU, RAM, Disk, Network, Battery)
 - Display controls (Brightness, Contrast, Input Source, etc.)
 - Webcam controls (if detected)
@@ -235,6 +237,9 @@ show_displays: true
 ```
 
 The card auto-discovers your Desk2HA entities. Click any device to
+open its control popup:
+
+![Monitor Controls](screenshots/popup-monitor.png) Click any device to
 open its control popup with sliders, toggles, and settings.
 
 ## Updating

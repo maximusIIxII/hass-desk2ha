@@ -11,19 +11,19 @@ Brings your entire desk — PC, monitors, peripherals — into Home Assistant. W
 
 ## Screenshots
 
-### Dashboard
+### Dashboard with Desk2HA Card
 
 ![Desk2HA Dashboard](docs/screenshots/dashboard.png)
 
-### Entity Views
+### Device Control Popup
 
-| Sensors | Controls | Diagnostics | Config |
-|---------|----------|-------------|--------|
-| ![Sensors](docs/screenshots/sensors.png) | ![Controls](docs/screenshots/controls.png) | ![Diagnostics](docs/screenshots/diagnostics.png) | ![Config](docs/screenshots/config.png) |
+Click any device in the card to open its control popup with inline sliders, toggles, and dropdowns:
 
-| Connected Devices |
-|-------------------|
-| ![Devices](docs/screenshots/devices.png) |
+![Monitor Controls](docs/screenshots/popup-monitor.png)
+
+### Connected Devices
+
+![Devices](docs/screenshots/devices.png)
 
 ## What you get
 
