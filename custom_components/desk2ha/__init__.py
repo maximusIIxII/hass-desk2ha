@@ -32,6 +32,8 @@ _ORPHANED_UNIQUE_IDS = {
 _SENSOR_ONLY_ORPHANS = {
     "system_lid_open",  # now binary_sensor only
     "battery_state",  # now binary_sensor only (On AC Power)
+    "power_charging",  # now binary_sensor only (since v1.0.1)
+    "power_usb_pd_connected",  # now binary_sensor only (since v1.0.1)
 }
 
 # Device names that indicate generic/orphaned sub-devices to remove.
