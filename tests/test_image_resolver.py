@@ -17,7 +17,7 @@ class TestResolveImageUrl:
     @pytest.mark.asyncio
     async def test_dell_dispatches(self) -> None:
         session = AsyncMock()
-        info = {"manufacturer": "Dell Inc.", "model": "Example Workstation", "service_tag": "ABC123"}
+        info = {"manufacturer": "Dell Inc.", "model": "Latitude 5550", "service_tag": "ABC123"}
         # Mock _resolve_dell to avoid HTTP
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr(
@@ -43,9 +43,9 @@ class TestResolveImageUrl:
 
 class TestDellCdnFallback:
     def test_generates_url(self) -> None:
-        url = _dell_cdn_fallback("Example Workstation")
+        url = _dell_cdn_fallback("Latitude 5550")
         assert url is not None
-        assert "precision-5770" in url
+        assert "latitude-5550" in url
         assert url.startswith("https://i.dell.com/")
 
     def test_empty_model(self) -> None:

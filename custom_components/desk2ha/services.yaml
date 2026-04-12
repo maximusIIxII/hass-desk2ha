@@ -10,7 +10,7 @@ refresh:
       name: Device Key
       description: Specific desk to refresh (leave empty for all desks).
       required: false
-      example: "ST-EXAMPLE01"
+      example: "ST-ABC1234"
       selector:
         text:
 
@@ -22,7 +22,7 @@ restart_agent:
       name: Device Key
       description: Device key of the desk whose agent should be restarted.
       required: true
-      example: "ST-EXAMPLE01"
+      example: "ST-ABC1234"
       selector:
         text:
 
@@ -38,7 +38,7 @@ wake_on_lan:
       name: Device Key
       description: Device key of the agent that should send the WoL packet.
       required: true
-      example: "ST-EXAMPLE01"
+      example: "ST-ABC1234"
       selector:
         text:
     mac:
@@ -48,3 +48,18 @@ wake_on_lan:
       example: "AA:BB:CC:DD:EE:FF"
       selector:
         text:
+
+device_health_check:
+  name: Device Health Check
+  description: >-
+    Scan all Desk2HA devices for issues (missing manufacturer, generic names,
+    stale/orphaned devices) and auto-fix what is possible. Fires a
+    desk2ha_health_report event with the results.
+  fields:
+    auto_fix:
+      name: Auto Fix
+      description: Automatically fix issues that can be resolved (remove orphans, update names).
+      required: false
+      default: true
+      selector:
+        boolean:

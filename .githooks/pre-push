@@ -1,0 +1,22 @@
+#!/bin/bash
+# Desk2HA Pre-Push Security Check
+# Runs the security scanner before allowing pushes to remote.
+# Install: git config core.hooksPath .githooks
+
+echo "Running Desk2HA security scan..."
+python "$(dirname "$0")/../../scripts/security-scan.py"
+exit_code=$?
+
+if [ $exit_code -eq 2 ]; then
+    echo ""
+    echo "PUSH BLOCKED: Critical security issues found."
+    echo "Fix the issues above before pushing."
+    exit 1
+fi
+
+if [ $exit_code -eq 1 ]; then
+    echo ""
+    echo "WARNING: High-severity issues found. Review before release."
+fi
+
+exit 0

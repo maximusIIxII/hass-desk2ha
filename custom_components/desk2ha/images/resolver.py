@@ -84,7 +84,7 @@ def _dell_cdn_fallback(model: str) -> str | None:
     if not model:
         return None
 
-    # Normalize: "Example Workstation" -> "precision-5770"
+    # Normalize: "Latitude 5550" -> "latitude-5550"
     slug = re.sub(r"[^a-z0-9]+", "-", model.lower()).strip("-")
 
     # Dell's CDN uses these patterns for product images

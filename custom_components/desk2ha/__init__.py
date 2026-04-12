@@ -46,6 +46,15 @@ _ORPHANED_DEVICE_NAMES = {
     "universal receiver",  # suppressed on agent side since v0.8.0
 }
 
+# Patterns (substring match) for device names that should be auto-removed.
+_ORPHANED_DEVICE_PATTERNS = [
+    "unbekanntes usb",
+    "unknown usb",
+    "fehler beim anfordern",
+    "device descriptor request failed",
+    "port reset failed",
+]
+
 # Manufacturer names that are actually Windows driver class names, not real manufacturers.
 _DRIVER_CLASS_MANUFACTURERS = {
     "winusb-gerät",
@@ -88,13 +97,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    # Register services, card, and install server (only once, on first entry)
+    # Register services, card, image serving, and install server (only once, on first entry)
     if len(hass.data[DOMAIN]) == 1:
         from .services import async_setup_services
 
         await async_setup_services(hass)
         await _register_card(hass)
         _register_install_server(hass)
+        _register_image_server(hass)
 
     # Clean up orphaned entities and devices from previous versions
     _cleanup_orphaned_entities(hass, entry)
@@ -131,6 +141,15 @@ def _register_install_server(hass: HomeAssistant) -> None:
         logger.info("Install server ready")
 
 
+def _register_image_server(hass: HomeAssistant) -> None:
+    """Register HTTP endpoint for product images."""
+    from .images.serve import register_image_routes
+
+    if f"{DOMAIN}_image_server" not in hass.data:
+        register_image_routes(hass)
+        hass.data[f"{DOMAIN}_image_server"] = True
+
+
 async def _register_card(hass: HomeAssistant) -> None:
     """Serve the Lovelace card JS file via HA's HTTP server."""
     if CARD_JS.is_file():
@@ -143,7 +162,13 @@ async def _register_card(hass: HomeAssistant) -> None:
 
 
 def _cleanup_orphaned_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Remove entity registry entries that belong to removed/renamed definitions."""
+    """Remove entity registry entries that belong to removed/renamed definitions.
+
+    Also removes:
+    - Disabled entities (delete instead of accumulating)
+    - Entities whose entity_id no longer matches the device they belong to
+      (e.g. hp_officejet entities left on a webcam device after re-detection)
+    """
     import re
 
     registry = er.async_get(hass)
@@ -156,9 +181,29 @@ def _cleanup_orphaned_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
     # Pattern for old receiver IDs (suppressed in v0.8.0)
     _OLD_RECEIVER_PATTERN = re.compile(r"peripheral_receiver_\d+_")
 
+    # Entity ID substrings from devices that no longer exist or were re-assigned
+    _STALE_ENTITY_PATTERNS = [
+        "hp_officejet",
+    ]
+
     for entity in entities:
         if not entity.unique_id:
             continue
+
+        # Remove disabled entities entirely (don't let them accumulate)
+        if entity.disabled_by is not None:
+            registry.async_remove(entity.entity_id)
+            removed += 1
+            continue
+
+        # Remove entities matching stale device patterns (check both entity_id and unique_id)
+        eid_lower = entity.entity_id.lower()
+        uid_lower = (entity.unique_id or "").lower()
+        if any(p in eid_lower or p in uid_lower for p in _STALE_ENTITY_PATTERNS):
+            registry.async_remove(entity.entity_id)
+            removed += 1
+            continue
+
         # Check if unique_id suffix matches a known orphan pattern
         for orphan_suffix in _ORPHANED_UNIQUE_IDS:
             if entity.unique_id.endswith(orphan_suffix):
@@ -224,6 +269,11 @@ def _cleanup_orphaned_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
         # 1. Remove devices with generic/orphaned names
         if name in _ORPHANED_DEVICE_NAMES:
+            _remove_device(device)
+            continue
+
+        # 1a. Remove devices matching error/descriptor-failure patterns
+        if any(pattern in name for pattern in _ORPHANED_DEVICE_PATTERNS):
             _remove_device(device)
             continue
 

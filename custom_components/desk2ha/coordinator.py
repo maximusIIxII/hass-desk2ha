@@ -9,9 +9,10 @@ from typing import Any
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import CONF_AGENT_TOKEN, CONF_AGENT_URL, CONF_POLL_INTERVAL, DEFAULT_SCAN_INTERVAL
+from .const import CONF_AGENT_TOKEN, CONF_AGENT_URL, CONF_POLL_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
 
 logger = logging.getLogger(__name__)
 
@@ -143,4 +144,87 @@ class Desk2HACoordinator(DataUpdateCoordinator[dict[str, Any]]):
             except Exception:
                 pass  # Non-critical, will retry next cycle
 
+        # Sync device registry with latest peripheral metadata
+        self._sync_device_registry(data)
+
         return data
+
+    def _sync_device_registry(self, data: dict[str, Any]) -> None:
+        """Update device registry entries when agent reports better metadata.
+
+        Fixes stale device names (e.g. raw IDs like 'peripheral.webcam_0')
+        and fills in missing manufacturers from agent data.
+        """
+        dev_registry = dr.async_get(self.hass)
+        device_key = self.device_key
+
+        # Helper to extract string values from metric wrappers
+        def _val(raw: Any) -> str:
+            if isinstance(raw, dict) and "value" in raw:
+                return str(raw["value"]).strip()
+            return str(raw).strip() if raw else ""
+
+        # Sync peripheral sub-devices (webcams, BT devices, USB peripherals)
+        for peripheral in data.get("peripherals", []):
+            if not isinstance(peripheral, dict):
+                continue
+            dev_id = peripheral.get("id", "")
+            if not dev_id:
+                continue
+
+            model = _val(peripheral.get("model", ""))
+            mfg = _val(peripheral.get("manufacturer", ""))
+            if not model:
+                continue
+
+            sub_device_id = f"{device_key}_{dev_id}"
+            device_entry = dev_registry.async_get_device(
+                identifiers={(DOMAIN, sub_device_id)}
+            )
+            if device_entry is None:
+                continue
+
+            # Strip manufacturer prefix to prevent "Dell Dell Webcam WB7022"
+            display_name = model
+            if mfg and model.lower().startswith(mfg.lower()):
+                display_name = model[len(mfg):].strip() or model
+
+            # Check if device registry needs updating
+            needs_update = False
+            updates: dict[str, Any] = {}
+
+            # Fix missing or placeholder names
+            current_name = device_entry.name or ""
+            if (
+                current_name.startswith("peripheral.")
+                or current_name.startswith("webcam_")
+                or not current_name
+            ):
+                updates["name"] = display_name
+                needs_update = True
+
+            # Fill in missing manufacturer
+            if not device_entry.manufacturer:
+                if mfg:
+                    updates["manufacturer"] = mfg
+                    needs_update = True
+                elif "webcam" in dev_id.lower() or "ir" in model.lower():
+                    # Built-in webcams: inherit manufacturer from host device
+                    hw = self.agent_info.get("hardware", {})
+                    host_mfg = hw.get("manufacturer", "")
+                    if host_mfg:
+                        updates["manufacturer"] = host_mfg
+                        needs_update = True
+
+            # Fill in missing model
+            if not device_entry.model and model:
+                updates["model"] = model
+                needs_update = True
+
+            if needs_update:
+                dev_registry.async_update_device(device_entry.id, **updates)
+                logger.info(
+                    "Updated device registry for %s: %s",
+                    sub_device_id,
+                    updates,
+                )
