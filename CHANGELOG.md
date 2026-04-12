@@ -3,6 +3,17 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [1.0.2] - 2026-04-12
+
+### 🔧 Improvements
+- **Pre-commit hook**: ruff lint + format + pytest before every commit
+- **bind = 0.0.0.0**: Added to Getting Started minimal config (fixes new install connectivity)
+- **Git history scrubbed**: All leaked credentials removed from repo history
+
+### 📖 Documentation
+- Migrated Peripheral Controls Concept from old repo (DDPM roadmap)
+- Migrated Grobkonzept + Vendor Analysis (Lenovo/HP/Logitech integration reference)
+
 ## [1.0.1] - 2026-04-12
 
 ### 🐛 Bug fixes
