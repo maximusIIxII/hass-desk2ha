@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji catego
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-04-13
+
+### ✨ New features
+- **Multi-Host Device Tracking**: Peripherals with `global_id` get host-independent identity (`desk2ha_global_` prefix), enabling roaming across hosts without losing automations/history
+- **Roaming state attributes**: `global_id`, `current_host`, `roaming_capable` exposed on peripheral entities
+- **Dynamic via_device**: Peripheral parent device updates automatically when `connected_host` changes
+- **Fleet compliance service**: New `desk2ha.compliance_check` service queries all agents for policy compliance status
+
+### 🔧 Improvements
+- **Sensor filtering**: `global_id` and `connected_host` excluded from sensor creation (exposed as entity attributes instead)
+
 ## [1.0.3] - 2026-04-13
 
 ### 🔧 Improvements
