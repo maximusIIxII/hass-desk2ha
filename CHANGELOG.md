@@ -3,7 +3,17 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
-## [Unreleased]
+## [1.2.0] - 2026-04-13
+
+### ✨ New features
+- **Policy Store**: Fleet policies persisted in `.storage/desk2ha_policies`, survive HA restarts
+- **`desk2ha.apply_policy` service**: Store and push policies to all or targeted agents with enforcement support
+- **`desk2ha.bulk_config` service**: Push bulk config changes to all or targeted agents in one operation
+- **DisplayPolicy enforcement**: Agents enforce brightness, color preset, power nap rules via DDC/CI
+
+### 🔧 Improvements
+- **Service events**: `desk2ha_policy_applied` and `desk2ha_bulk_config` events fired for automation triggers
+- **Restart notification**: Persistent notification when bulk_config requires agent restart
 
 ## [1.1.0] - 2026-04-13
 

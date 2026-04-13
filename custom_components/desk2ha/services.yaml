@@ -70,3 +70,98 @@ compliance_check:
     Query fleet policy compliance status from all configured agents.
     Returns per-agent compliance status and any policy violations.
     Fires a desk2ha_compliance_report event with the results.
+
+apply_policy:
+  name: Apply Policy
+  description: >-
+    Store a fleet policy and push it to all (or targeted) agents.
+    Policies are persisted and survive HA restarts.
+    Fires a desk2ha_policy_applied event with the results.
+  fields:
+    policy_id:
+      name: Policy ID
+      description: Unique identifier for this policy.
+      required: true
+      example: "corp-display-standard"
+      selector:
+        text:
+    kind:
+      name: Policy Kind
+      description: Type of policy (DisplayPolicy, AgentPolicy, SecurityPolicy, UpdatePolicy, PeripheralPolicy).
+      required: true
+      example: "DisplayPolicy"
+      selector:
+        select:
+          options:
+            - "DisplayPolicy"
+            - "AgentPolicy"
+            - "SecurityPolicy"
+            - "UpdatePolicy"
+            - "PeripheralPolicy"
+    version:
+      name: Version
+      description: Policy version number.
+      required: false
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 999
+    name:
+      name: Policy Name
+      description: Human-readable name for this policy.
+      required: true
+      example: "Corporate Display Standard"
+      selector:
+        text:
+    rules:
+      name: Rules
+      description: >-
+        Policy rules as key-value pairs. Range rules use {min, max, default},
+        exact-value rules use a scalar or {value: x}.
+      required: true
+      example: '{"brightness_percent": {"min": 30, "max": 80, "default": 50}, "color_preset": "sRGB"}'
+      selector:
+        object:
+    enforcement:
+      name: Enforcement Mode
+      description: How the policy is enforced (report_only, apply_on_connect, enforce_continuous, scheduled).
+      required: false
+      default: "report_only"
+      selector:
+        select:
+          options:
+            - "report_only"
+            - "apply_on_connect"
+            - "enforce_continuous"
+            - "scheduled"
+    targets:
+      name: Targets
+      description: List of device_keys to target. Leave empty to apply to all agents.
+      required: false
+      example: '["ST-ABC1234"]'
+      selector:
+        object:
+
+bulk_config:
+  name: Bulk Config
+  description: >-
+    Push config changes to all (or targeted) agents in a single operation.
+    Each change specifies a TOML section, key, and value.
+    Fires a desk2ha_bulk_config event with the results.
+  fields:
+    changes:
+      name: Changes
+      description: >-
+        List of config changes. Each item has section, key, and value.
+      required: true
+      example: '[{"section": "collectors.intervals", "key": "ddcci", "value": 60}]'
+      selector:
+        object:
+    targets:
+      name: Targets
+      description: List of device_keys to target. Leave empty to apply to all agents.
+      required: false
+      example: '["ST-ABC1234"]'
+      selector:
+        object:
