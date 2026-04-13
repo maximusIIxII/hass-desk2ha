@@ -21,6 +21,8 @@ SERVICE_FETCH_IMAGES = "fetch_product_images"
 SERVICE_WAKE_ON_LAN = "wake_on_lan"
 SERVICE_HEALTH_CHECK = "device_health_check"
 SERVICE_COMPLIANCE_CHECK = "compliance_check"
+SERVICE_APPLY_POLICY = "apply_policy"
+SERVICE_BULK_CONFIG = "bulk_config"
 
 FLEET_STATUS_SCHEMA = vol.Schema({})
 REFRESH_SCHEMA = vol.Schema(
@@ -37,6 +39,33 @@ WOL_SCHEMA = vol.Schema(
     {
         vol.Required("device_key"): str,
         vol.Required("mac"): str,
+    }
+)
+APPLY_POLICY_SCHEMA = vol.Schema(
+    {
+        vol.Required("policy_id"): str,
+        vol.Required("kind"): vol.In(
+            ["DisplayPolicy", "AgentPolicy", "SecurityPolicy", "UpdatePolicy", "PeripheralPolicy"]
+        ),
+        vol.Optional("version", default=1): int,
+        vol.Required("name"): str,
+        vol.Required("rules"): dict,
+        vol.Optional("enforcement", default="report_only"): vol.In(
+            ["report_only", "apply_on_connect", "enforce_continuous", "scheduled"]
+        ),
+        vol.Optional("targets"): list,
+    }
+)
+BULK_CONFIG_SCHEMA = vol.Schema(
+    {
+        vol.Required("changes"): [
+            {
+                vol.Required("section"): str,
+                vol.Required("key"): str,
+                vol.Required("value"): vol.Any(str, int, float, bool, list),
+            }
+        ],
+        vol.Optional("targets"): list,
     }
 )
 
@@ -565,9 +594,109 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN, SERVICE_COMPLIANCE_CHECK, handle_compliance_check, schema=vol.Schema({})
     )
 
+    async def handle_apply_policy(call: ServiceCall) -> dict[str, Any]:
+        """Store a policy and push it to all (or targeted) agents."""
+        from .policy_store import PolicyStore
+
+        policy_data = dict(call.data)
+        targets = policy_data.pop("targets", None)
+
+        # Persist policy in store
+        store: PolicyStore | None = hass.data.get(DOMAIN, {}).get("_policy_store")
+        if store is not None:
+            await store.async_add(policy_data)
+
+        # Push to agents
+        coordinators = _get_coordinators(hass)
+        if targets:
+            coordinators = {k: v for k, v in coordinators.items() if k in targets}
+
+        results: list[dict[str, Any]] = []
+        for device_key, coordinator in coordinators.items():
+            try:
+                result = await coordinator.async_send_command(
+                    "policy.apply",
+                    parameters=policy_data,
+                )
+                results.append({"device_key": device_key, **result})
+            except Exception:
+                logger.debug("apply_policy failed for %s", device_key, exc_info=True)
+                results.append({"device_key": device_key, "status": "unreachable"})
+
+        applied = sum(1 for r in results if r.get("status") == "accepted")
+        report = {
+            "policy_id": policy_data["policy_id"],
+            "applied_to": applied,
+            "failed": len(results) - applied,
+            "results": results,
+        }
+        hass.bus.async_fire(f"{DOMAIN}_policy_applied", report)
+        return report
+
+    hass.services.async_register(
+        DOMAIN, SERVICE_APPLY_POLICY, handle_apply_policy, schema=APPLY_POLICY_SCHEMA
+    )
+
+    async def handle_bulk_config(call: ServiceCall) -> dict[str, Any]:
+        """Push bulk config changes to all (or targeted) agents."""
+        changes = call.data["changes"]
+        targets = call.data.get("targets")
+
+        coordinators = _get_coordinators(hass)
+        if targets:
+            coordinators = {k: v for k, v in coordinators.items() if k in targets}
+
+        results: list[dict[str, Any]] = []
+        any_restart = False
+        for device_key, coordinator in coordinators.items():
+            try:
+                result = await coordinator.async_send_command(
+                    "config.bulk_set",
+                    parameters={"changes": changes},
+                )
+                results.append({"device_key": device_key, **result})
+                if result.get("restart_required"):
+                    any_restart = True
+            except Exception:
+                logger.debug("bulk_config failed for %s", device_key, exc_info=True)
+                results.append({"device_key": device_key, "status": "unreachable"})
+
+        applied = sum(1 for r in results if r.get("status") == "applied")
+        report = {
+            "applied_to": applied,
+            "failed": len(results) - applied,
+            "restart_required": any_restart,
+            "results": results,
+        }
+        hass.bus.async_fire(f"{DOMAIN}_bulk_config", report)
+
+        if any_restart:
+            try:
+                await hass.services.async_call(
+                    "persistent_notification",
+                    "create",
+                    {
+                        "title": "Desk2HA: Bulk Config Applied",
+                        "message": (
+                            f"Config changes pushed to {applied} agent(s). "
+                            "Some agents require a restart for changes to take effect."
+                        ),
+                        "notification_id": f"{DOMAIN}_bulk_config",
+                    },
+                )
+            except Exception:
+                logger.debug("Could not create persistent notification", exc_info=True)
+
+        return report
+
+    hass.services.async_register(
+        DOMAIN, SERVICE_BULK_CONFIG, handle_bulk_config, schema=BULK_CONFIG_SCHEMA
+    )
+
     logger.info(
         "Desk2HA services registered: fleet_status, refresh, restart_agent, "
-        "fetch_images, wol, device_health_check, compliance_check"
+        "fetch_images, wol, device_health_check, compliance_check, "
+        "apply_policy, bulk_config"
     )
 
 
@@ -581,5 +710,7 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_WAKE_ON_LAN,
         SERVICE_HEALTH_CHECK,
         SERVICE_COMPLIANCE_CHECK,
+        SERVICE_APPLY_POLICY,
+        SERVICE_BULK_CONFIG,
     ):
         hass.services.async_remove(DOMAIN, service)

@@ -103,7 +103,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Register services, card, image serving, and install server (only once, on first entry)
     if len(hass.data[DOMAIN]) == 1:
+        from .policy_store import PolicyStore
         from .services import async_setup_services
+
+        policy_store = PolicyStore(hass)
+        await policy_store.async_load()
+        hass.data[DOMAIN]["_policy_store"] = policy_store
 
         await async_setup_services(hass)
         await _register_card(hass)
