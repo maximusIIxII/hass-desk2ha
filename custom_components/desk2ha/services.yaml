@@ -63,3 +63,10 @@ device_health_check:
       default: true
       selector:
         boolean:
+
+compliance_check:
+  name: Compliance Check
+  description: >-
+    Query fleet policy compliance status from all configured agents.
+    Returns per-agent compliance status and any policy violations.
+    Fires a desk2ha_compliance_report event with the results.

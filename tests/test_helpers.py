@@ -73,6 +73,50 @@ def test_peripheral_metadata():
     assert meta["sub_device_id"] == "ST-ABC123_usb_0"
     assert meta["sub_device_name"] == "Speak2 75"
     assert meta["sub_manufacturer"] == "Jabra"
+    assert meta["global_id"] is None
+    assert meta["connected_host"] is None
+
+
+def test_peripheral_metadata_with_global_id():
+    """Roaming-capable peripheral uses global_id for device identity."""
+    peripheral = {
+        "id": "usb_046d_c548_abc12345",
+        "model": {"value": "MX Master 3S"},
+        "manufacturer": {"value": "Logitech"},
+        "global_id": {"value": "usb:046D:C548:ABC12345"},
+        "connected_host": {"value": "ST-TEST123"},
+    }
+    meta = peripheral_metadata(peripheral, "ST-TEST123")
+    assert meta["sub_device_id"] == "desk2ha_global_usb:046D:C548:ABC12345"
+    assert meta["global_id"] == "usb:046D:C548:ABC12345"
+    assert meta["connected_host"] == "ST-TEST123"
+
+
+def test_peripheral_metadata_bt_global_id():
+    """Bluetooth device uses MAC as global_id."""
+    peripheral = {
+        "id": "bt_D4BED9123456",
+        "model": {"value": "Evolve2 75"},
+        "manufacturer": {"value": "Jabra"},
+        "global_id": {"value": "bt:D4BED9123456"},
+        "connected_host": {"value": "ST-TEST123"},
+    }
+    meta = peripheral_metadata(peripheral, "ST-TEST123")
+    assert meta["sub_device_id"] == "desk2ha_global_bt:D4BED9123456"
+    assert meta["global_id"] == "bt:D4BED9123456"
+
+
+def test_peripheral_metadata_null_global_id():
+    """Non-roaming peripheral (global_id=None) stays host-bound."""
+    peripheral = {
+        "id": "usb_046d_c548",
+        "model": {"value": "MX Master 3S"},
+        "manufacturer": {"value": "Logitech"},
+        "global_id": {"value": None},
+    }
+    meta = peripheral_metadata(peripheral, "ST-ABC123")
+    assert meta["sub_device_id"] == "ST-ABC123_usb_046d_c548"
+    assert meta["global_id"] is None
 
 
 def test_peripheral_metadata_generic_usb():

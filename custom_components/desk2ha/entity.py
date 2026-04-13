@@ -144,6 +144,8 @@ class Desk2HASubDeviceEntity(Desk2HAEntity):
         sub_device_name: str = "",
         sub_manufacturer: str | None = None,
         sub_model: str | None = None,
+        global_id: str | None = None,
+        connected_host: str | None = None,
         **_kwargs: Any,
     ) -> None:
         super().__init__(coordinator, metric_key, name)
@@ -151,19 +153,36 @@ class Desk2HASubDeviceEntity(Desk2HAEntity):
         self._sub_device_name = sub_device_name
         self._sub_manufacturer = sub_manufacturer
         self._sub_model = sub_model
+        self._global_id = global_id
+        self._connected_host = connected_host
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return sub-device info, or host device if no sub_device_id."""
         if not self._sub_device_id:
             return super().device_info
+
+        # Determine which host this device is connected to
+        host_key = self._connected_host or self.coordinator.device_key
+
         return DeviceInfo(
             identifiers={(DOMAIN, self._sub_device_id)},
             name=self._sub_device_name,
             manufacturer=self._sub_manufacturer,
             model=self._sub_model,
-            via_device=(DOMAIN, self.coordinator.device_key),
+            via_device=(DOMAIN, host_key),
         )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return multi-host tracking attributes for peripheral entities."""
+        if not self._global_id:
+            return None
+        return {
+            "global_id": self._global_id,
+            "current_host": self._connected_host,
+            "roaming_capable": True,
+        }
 
     @property
     def available(self) -> bool:
