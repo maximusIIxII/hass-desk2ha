@@ -3,6 +3,14 @@
 All notable changes to the Desk2HA HA Integration will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji categories.
 
+## [Unreleased]
+
+## [1.0.3] - 2026-04-13
+
+### 🔧 Improvements
+- **Release script**: `scripts/release.sh` enforces full checklist (lint, format, tests, security scan, version bump, tag, push)
+- **Structured release notes**: `scripts/generate-release-notes.py` generates GitHub Release body from CHANGELOG with standard sections
+
 ## [1.0.2] - 2026-04-12
 
 ### 🔧 Improvements
