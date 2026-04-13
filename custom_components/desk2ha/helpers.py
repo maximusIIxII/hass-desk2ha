@@ -60,6 +60,8 @@ def peripheral_metadata(peripheral: dict[str, Any], device_key: str) -> dict[str
     dev_id = peripheral.get("id", "unknown")
     model = _get_value(peripheral.get("model", ""))
     mfg = _get_value(peripheral.get("manufacturer", ""))
+    global_id = _get_value(peripheral.get("global_id", ""))
+    connected_host = _get_value(peripheral.get("connected_host", ""))
 
     # Skip generic/unknown USB devices (no sub-device)
     if _is_generic_usb(model):
@@ -68,11 +70,19 @@ def peripheral_metadata(peripheral: dict[str, Any], device_key: str) -> dict[str
     # Use model as name, strip manufacturer prefix to avoid "Dell Dell KM7321W"
     name = _strip_manufacturer_prefix(model, mfg) or dev_id
 
+    # Roaming-capable devices use global_id for host-independent identity
+    if global_id and global_id != "None":
+        sub_device_id = f"desk2ha_global_{global_id}"
+    else:
+        sub_device_id = f"{device_key}_{dev_id}"
+
     return {
-        "sub_device_id": f"{device_key}_{dev_id}",
+        "sub_device_id": sub_device_id,
         "sub_device_name": name,
         "sub_manufacturer": mfg or None,
         "sub_model": model or None,
+        "global_id": global_id if global_id and global_id != "None" else None,
+        "connected_host": connected_host or None,
     }
 
 

@@ -394,6 +394,9 @@ async def async_setup_entry(
             meta = peripheral_metadata(peripheral, coordinator.device_key)
             sub_device_map[dev_id] = meta
 
+    # Peripheral metadata keys — exposed as entity attributes, not sensors
+    _PERIPHERAL_META_KEYS = {"global_id", "connected_host"}
+
     for metric_key in flat:
         if metric_key in _SKIP_KEYS:
             continue
@@ -401,6 +404,8 @@ async def async_setup_entry(
         if metric_key.startswith("display.") and key_suffix in _DISPLAY_CONTROL_KEYS:
             continue
         if metric_key.startswith("peripheral.webcam_") and key_suffix in _WEBCAM_CONTROL_KEYS:
+            continue
+        if metric_key.startswith("peripheral.") and key_suffix in _PERIPHERAL_META_KEYS:
             continue
 
         # Determine sub-device (display.0.xxx → display.0, peripheral.usb_3.xxx → peripheral.usb_3)

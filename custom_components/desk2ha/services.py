@@ -20,6 +20,7 @@ SERVICE_RESTART_AGENT = "restart_agent"
 SERVICE_FETCH_IMAGES = "fetch_product_images"
 SERVICE_WAKE_ON_LAN = "wake_on_lan"
 SERVICE_HEALTH_CHECK = "device_health_check"
+SERVICE_COMPLIANCE_CHECK = "compliance_check"
 
 FLEET_STATUS_SCHEMA = vol.Schema({})
 REFRESH_SCHEMA = vol.Schema(
@@ -514,9 +515,59 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         schema=vol.Schema({vol.Optional("auto_fix", default=True): bool}),
     )
 
+    async def handle_compliance_check(call: ServiceCall) -> dict[str, Any]:
+        """Query compliance status from all agents."""
+        import aiohttp
+
+        coordinators = _get_coordinators(hass)
+        results: list[dict[str, Any]] = []
+
+        for device_key, coordinator in coordinators.items():
+            url = coordinator.agent_url
+            token = coordinator.agent_token
+
+            try:
+                headers = {"Authorization": f"Bearer {token}"} if token else {}
+                async with (
+                    aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session,
+                    session.post(
+                        f"{url}/v1/commands",
+                        json={"command": "policy.status", "parameters": {}},
+                        headers=headers,
+                    ) as resp,
+                ):
+                    status_data = await resp.json()
+                    results.append({"device_key": device_key, **status_data})
+            except Exception:
+                logger.debug("Compliance check failed for %s", device_key, exc_info=True)
+                results.append(
+                    {
+                        "device_key": device_key,
+                        "status": "unreachable",
+                        "violations": [],
+                    }
+                )
+
+        total = len(results)
+        compliant = sum(1 for r in results if r.get("status") == "compliant")
+        report = {
+            "total_agents": total,
+            "compliant": compliant,
+            "non_compliant": total - compliant,
+            "compliance_percent": round(compliant / total * 100) if total else 100,
+            "agents": results,
+        }
+
+        hass.bus.async_fire(f"{DOMAIN}_compliance_report", report)
+        return report
+
+    hass.services.async_register(
+        DOMAIN, SERVICE_COMPLIANCE_CHECK, handle_compliance_check, schema=vol.Schema({})
+    )
+
     logger.info(
         "Desk2HA services registered: fleet_status, refresh, restart_agent, "
-        "fetch_images, wol, device_health_check"
+        "fetch_images, wol, device_health_check, compliance_check"
     )
 
 
@@ -529,5 +580,6 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_FETCH_IMAGES,
         SERVICE_WAKE_ON_LAN,
         SERVICE_HEALTH_CHECK,
+        SERVICE_COMPLIANCE_CHECK,
     ):
         hass.services.async_remove(DOMAIN, service)
