@@ -5,6 +5,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji catego
 
 ## [Unreleased]
 
+### 🐛 Bug fixes
+- **Display speaker now reports available**: `media_player.*_display_0_speaker` used to stay `unavailable` because the generic metric-existence guard in `Desk2HAEntity.available` looked up a non-existent composite key `display.X.speaker`. Availability is already gated at setup time (`"volume" not in display`) and state is derived from `power_state`. Fixed via `_check_metric_available = False` on `Desk2HADisplaySpeaker`.
+- **Display backlight now reports available + no longer named "U5226KW U5226KW"**: Same generic-availability bug as the speaker; the `light.*_display` entity now uses `_check_metric_available = False`. Entity name was also changed from `meta["sub_device_name"]` (= device name) to the literal `"Backlight"`, so HA renders it as "<Display> Backlight" instead of duplicating the device name.
+
 ## [1.3.0] - 2026-04-18
 
 ### 🔧 Improvements
