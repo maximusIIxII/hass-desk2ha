@@ -57,7 +57,7 @@ fi
 
 # Security scan (shared tool)
 if [[ -f "../scripts/security-scan.py" ]]; then
-    python3 ../scripts/security-scan.py . || { echo "[FAIL] security-scan"; exit 1; }
+    python3 ../scripts/security-scan.py || { echo "[FAIL] security-scan"; exit 1; }
     echo "[OK] security-scan"
 else
     echo "[WARN] ../scripts/security-scan.py not found — skipping"
