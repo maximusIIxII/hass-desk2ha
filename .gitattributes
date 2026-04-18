@@ -1,0 +1,12 @@
+# Enforce LF on shell scripts so they run on Windows git-bash without CRLF errors
+*.sh text eol=lf
+scripts/* text eol=lf
+
+# Python stays platform-native
+*.py text
+
+# Binaries
+*.png binary
+*.jpg binary
+*.svg binary
+*.ico binary
