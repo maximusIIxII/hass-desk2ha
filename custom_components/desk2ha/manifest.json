@@ -1,13 +1,19 @@
 {
   "domain": "desk2ha",
   "name": "Desk2HA",
-  "after_dependencies": ["http"],
-  "codeowners": ["@maximusIIxII"],
+  "after_dependencies": [
+    "http"
+  ],
+  "codeowners": [
+    "@maximusIIxII"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/maximusIIxII/hass-desk2ha",
   "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/maximusIIxII/hass-desk2ha/issues",
-  "version": "1.2.0",
-  "zeroconf": ["_desk2ha._tcp.local."]
+  "version": "1.3.0",
+  "zeroconf": [
+    "_desk2ha._tcp.local."
+  ]
 }

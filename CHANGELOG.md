@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji catego
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-04-18
+
 ### 🔧 Improvements
 - **Deploy-first release workflow**: `scripts/release.sh` now delegates to the shared `release-orchestrator.py`. The orchestrator runs staging deploy + live verification + baseline-diff BEFORE tagging/pushing. Legacy monolithic release.sh is kept as a thin wrapper with a deprecation notice.
 - **Split preflight and publish**: New `scripts/predeploy.sh` (lint/tests/security/changelog) and `scripts/publish.sh` (version bump + tag + push).
