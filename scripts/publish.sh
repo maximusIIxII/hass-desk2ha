@@ -100,7 +100,7 @@ echo "[OK] $VERSION_FILE -> $VERSION"
 DATE=$(date +%Y-%m-%d)
 sed -i "s/^## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
 
-PREV_VERSION=$(grep -oP '^\## \[\K[\d.]+' CHANGELOG.md | head -2 | tail -1)
+PREV_VERSION=$(sed -n 's/^## \[\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)\].*/\1/p' CHANGELOG.md | head -2 | tail -1)
 if [[ -n "$PREV_VERSION" ]] && grep -q "^\[${PREV_VERSION}\]:" CHANGELOG.md; then
     sed -i "/^\[${PREV_VERSION}\]:/i [$VERSION]: $REPO_URL/compare/v${PREV_VERSION}...v$VERSION" CHANGELOG.md
 fi
