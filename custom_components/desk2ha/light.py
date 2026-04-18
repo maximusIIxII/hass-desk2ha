@@ -47,7 +47,7 @@ async def async_setup_entry(
         idx = target.split(".")[-1] if "." in target else str(i)
         meta = display_metadata(display, idx, coordinator.device_key)
 
-        entities.append(Desk2HADisplayLight(coordinator, target, meta["sub_device_name"], **meta))
+        entities.append(Desk2HADisplayLight(coordinator, target, "Backlight", **meta))
 
     # Litra desk lamps as lights with brightness + color temp
     for peripheral in extract_peripherals(coordinator.data or {}):
@@ -70,6 +70,9 @@ class Desk2HADisplayLight(Desk2HASubDeviceEntity, LightEntity):
 
     _attr_color_mode = ColorMode.BRIGHTNESS
     _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
+    # Availability is gated at setup time via `"brightness_percent" not in display`;
+    # the metric_key "display.X.light" is a composite identifier the agent doesn't emit.
+    _check_metric_available = False
 
     def __init__(
         self,

@@ -57,6 +57,10 @@ class Desk2HADisplaySpeaker(Desk2HASubDeviceEntity, MediaPlayerEntity):
     _attr_supported_features = (
         MediaPlayerEntityFeature.VOLUME_SET | MediaPlayerEntityFeature.VOLUME_STEP
     )
+    # Availability is derived from power_state + volume presence (checked at
+    # setup time via `"volume" not in display`). The metric_key "display.X.speaker"
+    # is a composite identifier the agent doesn't emit — skip the generic check.
+    _check_metric_available = False
 
     def __init__(
         self,
