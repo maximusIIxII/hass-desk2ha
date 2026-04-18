@@ -125,9 +125,7 @@ def _detect_repo_url() -> str:
     import subprocess
 
     try:
-        remote = subprocess.check_output(
-            ["git", "remote", "get-url", "origin"], text=True
-        ).strip()
+        remote = subprocess.check_output(["git", "remote", "get-url", "origin"], text=True).strip()
         # Convert SSH to HTTPS format
         m = re.match(r"git@github\.com:(.+?)(?:\.git)?$", remote)
         if m:
