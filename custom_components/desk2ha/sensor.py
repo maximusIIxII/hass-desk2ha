@@ -38,6 +38,9 @@ class SensorDef:
     state_class: str | None = None
     icon: str | None = None
     diagnostic: bool = False
+    # For device_class=ENUM sensors: allowed state values. HA validates that
+    # the native_value is one of these and hides unknown states as "unavailable".
+    options: tuple[str, ...] | None = None
 
 
 # Known metric keys with rich metadata.
@@ -174,6 +177,24 @@ KNOWN_SENSORS: dict[str, SensorDef] = {
         "Power Consumption", SensorDeviceClass.POWER, "W", "measurement"
     ),
     "power.source": SensorDef("Power Source", icon="mdi:power-plug"),
+    # power.charge_mode: enum sensor surfacing adaptive-charging pause.
+    # Values: "charging" | "discharging" | "ac_idle" | "full" | "low"
+    #         | "critical" | "unknown". "ac_idle" = plugged in but not pulling
+    # current (Dell Power Manager / Lenovo Battery Conservation hold).
+    "power.charge_mode": SensorDef(
+        "Charge Mode",
+        device_class=SensorDeviceClass.ENUM,
+        icon="mdi:battery-charging",
+        options=(
+            "charging",
+            "discharging",
+            "ac_idle",
+            "full",
+            "low",
+            "critical",
+            "unknown",
+        ),
+    ),
     # power.usb_pd_connected → binary_sensor (since v1.0.1)
     # power.charging → binary_sensor (since v1.0.1)
     "power.design_voltage": SensorDef(
@@ -429,6 +450,7 @@ async def async_setup_entry(
                     state_class=defn.state_class,
                     icon=defn.icon,
                     diagnostic=defn.diagnostic,
+                    options=defn.options,
                     **sub_meta,
                 )
             )
@@ -469,6 +491,7 @@ class Desk2HASensor(Desk2HASubDeviceEntity, SensorEntity):
         state_class: str | None = None,
         icon: str | None = None,
         diagnostic: bool = False,
+        options: tuple[str, ...] | None = None,
         **sub_kwargs: Any,
     ) -> None:
         super().__init__(coordinator, metric_key, name, **sub_kwargs)
@@ -482,6 +505,8 @@ class Desk2HASensor(Desk2HASubDeviceEntity, SensorEntity):
             self._attr_icon = icon
         if diagnostic:
             self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        if options:
+            self._attr_options = list(options)
 
     @property
     def native_value(self) -> Any:

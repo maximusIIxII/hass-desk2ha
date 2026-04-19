@@ -193,3 +193,26 @@ class TestEntityAvailability:
         coord = _make_coordinator(data=SAMPLE_DATA)
         entity = Desk2HAEntity(coord, "thermals.fan.missing", "Missing Fan")
         assert entity.available is False
+
+
+# ---------------------------------------------------------------------------
+# Update entity icon override
+# ---------------------------------------------------------------------------
+
+
+class TestUpdateEntityIcon:
+    """HA core's UpdateEntity.entity_picture forces the brands.home-assistant.io
+    URL by default. We serve our own brand icon as a static path and need
+    entity_picture to resolve to it — pin the override so a future HA-core
+    refactor can't silently regress us back to the brands URL.
+    """
+
+    def test_entity_picture_uses_local_brand_path(self):
+        coord = _make_coordinator(data=SAMPLE_DATA)
+        entity = Desk2HAUpdateEntity(coord)
+        assert entity.entity_picture == "/desk2ha/brand/icon.png"
+
+    def test_entity_picture_does_not_use_brands_homeassistant_io(self):
+        coord = _make_coordinator(data=SAMPLE_DATA)
+        entity = Desk2HAUpdateEntity(coord)
+        assert "brands.home-assistant.io" not in (entity.entity_picture or "")

@@ -48,6 +48,14 @@ class Desk2HAUpdateEntity(Desk2HAEntity, UpdateEntity):
         self._attr_entity_picture = f"/{DOMAIN}/brand/icon.png"
 
     @property
+    def entity_picture(self) -> str | None:
+        # HA core's UpdateEntity overrides entity_picture to always return
+        # the brands.home-assistant.io URL, ignoring _attr_entity_picture.
+        # Re-override here so our locally-served brand icon (registered as a
+        # static path in __init__._register_card) wins.
+        return self._attr_entity_picture
+
+    @property
     def installed_version(self) -> str | None:
         return self._update_info.get(
             "installed_version",
