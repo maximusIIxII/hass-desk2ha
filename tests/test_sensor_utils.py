@@ -95,6 +95,23 @@ def test_known_sensors_diagnostic_flag():
     assert KNOWN_SENSORS["system.cpu_usage_percent"].diagnostic is False
 
 
+def test_charge_mode_is_enum_with_ac_idle_option():
+    """power.charge_mode surfaces adaptive-pause state ("ac_idle").
+
+    Without this option HA would flag the value as unknown and hide the
+    sensor — which would silently regress the fix.
+    """
+    from homeassistant.components.sensor import SensorDeviceClass
+
+    defn = KNOWN_SENSORS["power.charge_mode"]
+    assert defn.device_class is SensorDeviceClass.ENUM
+    assert defn.options is not None
+    assert "ac_idle" in defn.options
+    assert "charging" in defn.options
+    assert "discharging" in defn.options
+    assert "full" in defn.options
+
+
 # ---------------------------------------------------------------------------
 # Sensor-exclusion sets: display controls & webcam controls
 # ---------------------------------------------------------------------------

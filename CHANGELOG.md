@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji catego
 
 ## [Unreleased]
 
+### 🐛 Bug fixes
+- **Update entity icon no longer overridden by HA core**: HA's built-in `UpdateEntity` forces `entity_picture` to a `brands.home-assistant.io/_/desk2ha/icon.png` URL regardless of `_attr_entity_picture`. Our locally-served brand icon (registered as a static path under `/desk2ha/brand/icon.png`) was silently replaced. `Desk2HAUpdateEntity` now overrides `entity_picture` to return our local path.
+
+### ✨ New features
+- **`power.charge_mode` enum sensor**: surfaces Dell Adaptive Charging / Lenovo Battery Conservation pause as a distinct `"ac_idle"` state. Previous UX showed "Charging: Off" during adaptive hold, which was correct but confusing. The new "Charge Mode" sensor reports `"charging" | "discharging" | "ac_idle" | "full" | "low" | "critical"`. The existing `power.charging` binary sensor semantics are unchanged.
+
 ## [1.4.1] - 2026-04-19
 
 ### 🔧 Improvements
