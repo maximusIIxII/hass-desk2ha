@@ -29,13 +29,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dev deps (ruff, pytest)
-        run: |
-          pip install ruff pytest
-          # Minimal HA stubs for pytest collection
-          if [ -f requirements-dev.txt ]; then
-            pip install -r requirements-dev.txt
-          fi
+      - name: Install dev deps (ruff, pytest, HA test stubs)
+        # Mirror the existing ci.yml test job — same deps or pytest
+        # can't collect async tests (PytestUnknownMarkWarning → errors).
+        run: pip install ruff pytest pytest-asyncio aiohttp
 
       - name: Run predeploy.sh
         run: bash scripts/predeploy.sh
