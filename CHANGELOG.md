@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji catego
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-04-19
+
 ### 🔧 Improvements
 - **Release-readiness CI workflow**: new `.github/workflows/release-readiness.yml` runs `scripts/predeploy.sh` on every PR + push to main — the same gate the orchestrator enforces at release time. Catches empty `[Unreleased]` and format drift pre-merge.
 - **`predeploy.sh` fails loud**: missing `ruff`/`pytest` now exits non-zero instead of warning-and-skipping.
