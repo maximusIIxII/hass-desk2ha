@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) with emoji catego
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-04-27
+
 ### 🐛 Bug fixes
 - **Update entity icon no longer overridden by HA core**: HA's built-in `UpdateEntity` forces `entity_picture` to a `brands.home-assistant.io/_/desk2ha/icon.png` URL regardless of `_attr_entity_picture`. Our locally-served brand icon (registered as a static path under `/desk2ha/brand/icon.png`) was silently replaced. `Desk2HAUpdateEntity` now overrides `entity_picture` to return our local path.
 
